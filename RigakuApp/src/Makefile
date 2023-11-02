@@ -20,10 +20,10 @@ DBD += RigakuSupport.dbd
 
 # specify all source files to be compiled and added to the library
 Riagku_SRCS += Rigaku_MM003i.cpp
-Riagku_LIBS_Linux += Wrapper
-ifeq (win, $(findstring win, $(T_A)))
-Riagku_LIBS += CommsWrapper
-endif
+# Riagku_LIBS_Linux += Wrapper
+# ifeq (win, $(findstring win, $(T_A)))
+# Riagku_LIBS += CommsWrapper
+# endif
 
 Riagku_Libs += asyn
 Riagku_LIBS += $(EPICS_BASE_IOC_LIBS)

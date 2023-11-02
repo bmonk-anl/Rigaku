@@ -1,0 +1,250 @@
+record(ai, "$(P)$(T):voltage_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR))VOLTAGE_IN_VALUE")
+    field(LINR, "NO CONVERSION")
+	field(PREC, "1")
+	field(EGU,  "V")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(T):current_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR))CURRENT_IN_VALUE")
+    field(LINR, "NO CONVERSION")
+	field(PREC, "1")
+	field(EGU,  "uA")
+    field(SCAN, "I/O Intr")
+}
+
+record(ao, "$(P)$(T):voltage")
+{
+    field(DTYP, "asynFloat64")
+    field(OUT,  "@asyn($(PORT),$(ADDR))VOLTAGE_OUT_VALUE")
+    field(LINR, "NO CONVERSION")
+	field(PREC, "1")
+	field(EGU,  "V")
+    field(SCAN, "Passive")
+}
+
+record(ao, "$(P)$(T):current")
+{
+    field(DTYP, "asynFloat64")
+    field(OUT,  "@asyn($(PORT),$(ADDR))CURRENT_OUT_VALUE")
+    field(LINR, "NO CONVERSION")
+	field(PREC, "1")
+	field(EGU,  "uA")
+    field(SCAN, "Passive")
+}
+
+# BINARY OUT RECORDS:
+
+record(bo, "$(P)$(T):setPower")
+{
+	field(DTYP, "asynInt32")
+	field(OUT,  "@asyn($(PORT),$(ADDR))SET_POWER")
+	field(ZNAM, "Off")
+	field(ONAM, "On")
+	field(VAL,  0)
+}
+record(bo, "$(P)$(T):setDoorLock")
+{
+	field(DTYP, "asynInt32")
+	field(OUT,  "@asyn($(PORT),$(ADDR))SET_DOOR_LOCK")
+	field(ZNAM, "Unlock")
+	field(ONAM, "Lock")
+}
+record(bo, "$(P)$(T):setXrayOn")
+{
+	field(DTYP, "asynInt32")
+	field(OUT,  "@asyn($(PORT),$(ADDR))SET_XRAY_ON")
+	field(ZNAM, "Off")
+	field(ONAM, "On")
+	field(VAL,  0)
+}
+record(bo, "$(P)$(T):setShutterOpen")
+{
+	field(DTYP, "asynInt32")
+	field(OUT,  "@asyn($(PORT),$(ADDR))SET_SHUTTER_OPEN")
+	field(ZNAM, "Close")
+	field(ONAM, "Open")
+	field(VAL,  0)
+}
+record(bo, "$(P)$(T):resetWarning1")
+{
+	field(DTYP, "asynInt32")
+	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_WARNING_1")
+	field(VAL,  0)
+}
+record(bo, "$(P)$(T):resetWarning2")
+{
+	field(DTYP, "asynInt32")
+	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_WARNING_2")
+	field(VAL,  0)
+}
+record(bo, "$(P)$(T):resetWarning3")
+{
+	field(DTYP, "asynInt32")
+	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_WARNING_3")
+	field(VAL,  0)
+}
+record(bo, "$(P)$(T):resetWarning4")
+{
+	field(DTYP, "asynInt32")
+	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_WARNING_4")
+	field(VAL,  0)
+}
+record(bo, "$(P)$(T):resetWarning5")
+{
+	field(DTYP, "asynInt32")
+	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_WARNING_5")
+	field(VAL,  0)
+}
+record(bo, "$(P)$(T):resetAlarm1")
+{
+	field(DTYP, "asynInt32")
+	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_ALARM_1")
+	field(VAL,  0)
+}
+record(bo, "$(P)$(T):resetAlarm2")
+{
+	field(DTYP, "asynInt32")
+	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_ALARM_2")
+	field(VAL,  0)
+}
+record(bo, "$(P)$(T):resetAlarm3")
+{
+	field(DTYP, "asynInt32")
+	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_ALARM_3")
+	field(VAL,  0)
+}
+record(bo, "$(P)$(T):resetAlarm4")
+{
+	field(DTYP, "asynInt32")
+	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_ALARM_4")
+	field(VAL,  0)
+}
+record(bo, "$(P)$(T):resetAlarm5")
+{
+	field(DTYP, "asynInt32")
+	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_ALARM_5")
+	field(VAL,  0)
+}
+
+record(bi, "$(P)$(T):xrayReady_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR))STATUS_XRAY_READY")
+	field(ZNAM, "Not Ready")
+	field(ONAM, "Ready")
+	field(SCAN, "I/O Intr")
+}
+record(bi, "$(P)$(T):xrayOn_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR))STATUS_XRAY_ON")
+	field(ZNAM, "Off")
+	field(ONAM, "On")
+	field(SCAN, "I/O Intr")
+}
+record(bi, "$(P)$(T):shutterOpen_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR))STATUS_SHUTTER_OPEN")
+	field(ZNAM, "Closed")
+	field(ONAM, "Open")
+	field(SCAN, "I/O Intr")
+}
+record(bi, "$(P)$(T):doorUnlocked_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR))STATUS_DOOR_UNLOCKED")
+	field(ZNAM, "Locked")
+	field(ONAM, "Unlocked")
+	field(SCAN, "I/O Intr")
+}
+record(bi, "$(P)$(T):doorOpen_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR))STATUS_DOOR_OPEN")
+	field(ZNAM, "CLosed")
+	field(ONAM, "Open")
+	field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(T):rampAtLimit_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR))STATUS_RAMP_SETPOINT")
+	field(ZNAM, "No")
+	field(ONAM, "Yes")
+	field(SCAN, "I/O Intr")
+}
+
+record(stringin, "$(P)$(T):curError_RBV")
+{
+    field(DTYP, "asynOctet")
+    field(INP,  "@asyn($(PORT),$(ADDR))STATUS_CUR_ERROR")
+    field(SCAN, "I/O Intr")
+}
+record(stringin, "$(P)$(T):warning1_RBV")
+{
+    field(DTYP, "asynOctet")
+    field(INP,  "@asyn($(PORT),$(ADDR))STATUS_WARNING_1")
+    field(SCAN, "I/O Intr")
+}
+record(stringin, "$(P)$(T):warning2_RBV")
+{
+    field(DTYP, "asynOctet")
+    field(INP,  "@asyn($(PORT),$(ADDR))STATUS_WARNING_2")
+    field(SCAN, "I/O Intr")
+}
+record(stringin, "$(P)$(T):warning3_RBV")
+{
+    field(DTYP, "asynOctet")
+    field(INP,  "@asyn($(PORT),$(ADDR))STATUS_WARNING_3")
+    field(SCAN, "I/O Intr")
+}
+record(stringin, "$(P)$(T):warning4_RBV")
+{
+    field(DTYP, "asynOctet")
+    field(INP,  "@asyn($(PORT),$(ADDR))STATUS_WARNING_4")
+    field(SCAN, "I/O Intr")
+}
+record(stringin, "$(P)$(T):warning5_RBV")
+{
+    field(DTYP, "asynOctet")
+    field(INP,  "@asyn($(PORT),$(ADDR))STATUS_WARNING_5")
+    field(SCAN, "I/O Intr")
+}
+record(stringin, "$(P)$(T):alarm1_RBV")
+{
+    field(DTYP, "asynOctet")
+    field(INP,  "@asyn($(PORT),$(ADDR))STATUS_ALARM_1")
+    field(SCAN, "I/O Intr")
+}
+record(stringin, "$(P)$(T):alarm2_RBV")
+{
+    field(DTYP, "asynOctet")
+    field(INP,  "@asyn($(PORT),$(ADDR))STATUS_ALARM_2")
+    field(SCAN, "I/O Intr")
+}
+record(stringin, "$(P)$(T):alarm3_RBV")
+{
+    field(DTYP, "asynOctet")
+    field(INP,  "@asyn($(PORT),$(ADDR))STATUS_ALARM_3")
+    field(SCAN, "I/O Intr")
+}
+record(stringin, "$(P)$(T):alarm4_RBV")
+{
+    field(DTYP, "asynOctet")
+    field(INP,  "@asyn($(PORT),$(ADDR))STATUS_ALARM_4")
+    field(SCAN, "I/O Intr")
+}
+record(stringin, "$(P)$(T):alarm5_RBV")
+{
+    field(DTYP, "asynOctet")
+    field(INP,  "@asyn($(PORT),$(ADDR))STATUS_ALARM_5")
+    field(SCAN, "I/O Intr")
+}
