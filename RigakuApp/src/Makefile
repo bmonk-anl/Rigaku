@@ -15,18 +15,18 @@ LIBRARY_IOC += Rigaku
 
 # xxxRecord.h will be created from xxxRecord.dbd
 #DBDINC += xxxRecord
-# install Riagku.dbd into <top>/dbd
+# install Rigaku.dbd into <top>/dbd
 DBD += RigakuSupport.dbd
 
 # specify all source files to be compiled and added to the library
-Riagku_SRCS += Rigaku_MM003i.cpp
-# Riagku_LIBS_Linux += Wrapper
+Rigaku_SRCS += Rigaku_MM003i.cpp
+Rigaku_LIBS_Linux += Wrapper
 # ifeq (win, $(findstring win, $(T_A)))
-# Riagku_LIBS += CommsWrapper
+# Rigaku_LIBS += CommsWrapper
 # endif
 
-Riagku_Libs += asyn
-Riagku_LIBS += $(EPICS_BASE_IOC_LIBS)
+Rigaku_LIBS += asyn
+Rigaku_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 #===========================
 

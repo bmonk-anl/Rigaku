@@ -1,4 +1,4 @@
-record(ai, "$(P)$(T):voltage_RBV")
+record(ai, "$(P)$(R)voltage_RBV")
 {
     field(DTYP, "asynFloat64")
     field(INP,  "@asyn($(PORT),$(ADDR))VOLTAGE_IN_VALUE")
@@ -8,7 +8,7 @@ record(ai, "$(P)$(T):voltage_RBV")
     field(SCAN, "I/O Intr")
 }
 
-record(ai, "$(P)$(T):current_RBV")
+record(ai, "$(P)$(R)current_RBV")
 {
     field(DTYP, "asynFloat64")
     field(INP,  "@asyn($(PORT),$(ADDR))CURRENT_IN_VALUE")
@@ -18,7 +18,7 @@ record(ai, "$(P)$(T):current_RBV")
     field(SCAN, "I/O Intr")
 }
 
-record(ao, "$(P)$(T):voltage")
+record(ao, "$(P)$(R)voltage")
 {
     field(DTYP, "asynFloat64")
     field(OUT,  "@asyn($(PORT),$(ADDR))VOLTAGE_OUT_VALUE")
@@ -28,7 +28,7 @@ record(ao, "$(P)$(T):voltage")
     field(SCAN, "Passive")
 }
 
-record(ao, "$(P)$(T):current")
+record(ao, "$(P)$(R)current")
 {
     field(DTYP, "asynFloat64")
     field(OUT,  "@asyn($(PORT),$(ADDR))CURRENT_OUT_VALUE")
@@ -38,9 +38,7 @@ record(ao, "$(P)$(T):current")
     field(SCAN, "Passive")
 }
 
-# BINARY OUT RECORDS:
-
-record(bo, "$(P)$(T):setPower")
+record(bo, "$(P)$(R)setPower")
 {
 	field(DTYP, "asynInt32")
 	field(OUT,  "@asyn($(PORT),$(ADDR))SET_POWER")
@@ -48,14 +46,14 @@ record(bo, "$(P)$(T):setPower")
 	field(ONAM, "On")
 	field(VAL,  0)
 }
-record(bo, "$(P)$(T):setDoorLock")
+record(bo, "$(P)$(R)setDoorLock")
 {
 	field(DTYP, "asynInt32")
 	field(OUT,  "@asyn($(PORT),$(ADDR))SET_DOOR_LOCK")
 	field(ZNAM, "Unlock")
 	field(ONAM, "Lock")
 }
-record(bo, "$(P)$(T):setXrayOn")
+record(bo, "$(P)$(R)setXrayOn")
 {
 	field(DTYP, "asynInt32")
 	field(OUT,  "@asyn($(PORT),$(ADDR))SET_XRAY_ON")
@@ -63,7 +61,7 @@ record(bo, "$(P)$(T):setXrayOn")
 	field(ONAM, "On")
 	field(VAL,  0)
 }
-record(bo, "$(P)$(T):setShutterOpen")
+record(bo, "$(P)$(R)setShutterOpen")
 {
 	field(DTYP, "asynInt32")
 	field(OUT,  "@asyn($(PORT),$(ADDR))SET_SHUTTER_OPEN")
@@ -71,68 +69,68 @@ record(bo, "$(P)$(T):setShutterOpen")
 	field(ONAM, "Open")
 	field(VAL,  0)
 }
-record(bo, "$(P)$(T):resetWarning1")
+record(bo, "$(P)$(R)resetWarning1")
 {
 	field(DTYP, "asynInt32")
 	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_WARNING_1")
 	field(VAL,  0)
 }
-record(bo, "$(P)$(T):resetWarning2")
+record(bo, "$(P)$(R)resetWarning2")
 {
 	field(DTYP, "asynInt32")
 	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_WARNING_2")
 	field(VAL,  0)
 }
-record(bo, "$(P)$(T):resetWarning3")
+record(bo, "$(P)$(R)resetWarning3")
 {
 	field(DTYP, "asynInt32")
 	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_WARNING_3")
 	field(VAL,  0)
 }
-record(bo, "$(P)$(T):resetWarning4")
+record(bo, "$(P)$(R)resetWarning4")
 {
 	field(DTYP, "asynInt32")
 	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_WARNING_4")
 	field(VAL,  0)
 }
-record(bo, "$(P)$(T):resetWarning5")
+record(bo, "$(P)$(R)resetWarning5")
 {
 	field(DTYP, "asynInt32")
 	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_WARNING_5")
 	field(VAL,  0)
 }
-record(bo, "$(P)$(T):resetAlarm1")
+record(bo, "$(P)$(R)resetAlarm1")
 {
 	field(DTYP, "asynInt32")
 	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_ALARM_1")
 	field(VAL,  0)
 }
-record(bo, "$(P)$(T):resetAlarm2")
+record(bo, "$(P)$(R)resetAlarm2")
 {
 	field(DTYP, "asynInt32")
 	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_ALARM_2")
 	field(VAL,  0)
 }
-record(bo, "$(P)$(T):resetAlarm3")
+record(bo, "$(P)$(R)resetAlarm3")
 {
 	field(DTYP, "asynInt32")
 	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_ALARM_3")
 	field(VAL,  0)
 }
-record(bo, "$(P)$(T):resetAlarm4")
+record(bo, "$(P)$(R)resetAlarm4")
 {
 	field(DTYP, "asynInt32")
 	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_ALARM_4")
 	field(VAL,  0)
 }
-record(bo, "$(P)$(T):resetAlarm5")
+record(bo, "$(P)$(R)resetAlarm5")
 {
 	field(DTYP, "asynInt32")
 	field(OUT,  "@asyn($(PORT),$(ADDR))RESET_ALARM_5")
 	field(VAL,  0)
 }
 
-record(bi, "$(P)$(T):xrayReady_RBV")
+record(bi, "$(P)$(R)xrayReady_RBV")
 {
     field(DTYP, "asynInt32")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_XRAY_READY")
@@ -140,7 +138,7 @@ record(bi, "$(P)$(T):xrayReady_RBV")
 	field(ONAM, "Ready")
 	field(SCAN, "I/O Intr")
 }
-record(bi, "$(P)$(T):xrayOn_RBV")
+record(bi, "$(P)$(R)xrayOn_RBV")
 {
     field(DTYP, "asynInt32")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_XRAY_ON")
@@ -148,7 +146,7 @@ record(bi, "$(P)$(T):xrayOn_RBV")
 	field(ONAM, "On")
 	field(SCAN, "I/O Intr")
 }
-record(bi, "$(P)$(T):shutterOpen_RBV")
+record(bi, "$(P)$(R)shutterOpen_RBV")
 {
     field(DTYP, "asynInt32")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_SHUTTER_OPEN")
@@ -156,7 +154,7 @@ record(bi, "$(P)$(T):shutterOpen_RBV")
 	field(ONAM, "Open")
 	field(SCAN, "I/O Intr")
 }
-record(bi, "$(P)$(T):doorUnlocked_RBV")
+record(bi, "$(P)$(R)doorUnlocked_RBV")
 {
     field(DTYP, "asynInt32")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_DOOR_UNLOCKED")
@@ -164,7 +162,7 @@ record(bi, "$(P)$(T):doorUnlocked_RBV")
 	field(ONAM, "Unlocked")
 	field(SCAN, "I/O Intr")
 }
-record(bi, "$(P)$(T):doorOpen_RBV")
+record(bi, "$(P)$(R)doorOpen_RBV")
 {
     field(DTYP, "asynInt32")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_DOOR_OPEN")
@@ -173,76 +171,67 @@ record(bi, "$(P)$(T):doorOpen_RBV")
 	field(SCAN, "I/O Intr")
 }
 
-record(bi, "$(P)$(T):rampAtLimit_RBV")
-{
-    field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT),$(ADDR))STATUS_RAMP_SETPOINT")
-	field(ZNAM, "No")
-	field(ONAM, "Yes")
-	field(SCAN, "I/O Intr")
-}
-
-record(stringin, "$(P)$(T):curError_RBV")
+record(stringin, "$(P)$(R)curError_RBV")
 {
     field(DTYP, "asynOctet")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_CUR_ERROR")
     field(SCAN, "I/O Intr")
 }
-record(stringin, "$(P)$(T):warning1_RBV")
+record(stringin, "$(P)$(R)warning1_RBV")
 {
     field(DTYP, "asynOctet")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_WARNING_1")
     field(SCAN, "I/O Intr")
 }
-record(stringin, "$(P)$(T):warning2_RBV")
+record(stringin, "$(P)$(R)warning2_RBV")
 {
     field(DTYP, "asynOctet")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_WARNING_2")
     field(SCAN, "I/O Intr")
 }
-record(stringin, "$(P)$(T):warning3_RBV")
+record(stringin, "$(P)$(R)warning3_RBV")
 {
     field(DTYP, "asynOctet")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_WARNING_3")
     field(SCAN, "I/O Intr")
 }
-record(stringin, "$(P)$(T):warning4_RBV")
+record(stringin, "$(P)$(R)warning4_RBV")
 {
     field(DTYP, "asynOctet")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_WARNING_4")
     field(SCAN, "I/O Intr")
 }
-record(stringin, "$(P)$(T):warning5_RBV")
+record(stringin, "$(P)$(R)warning5_RBV")
 {
     field(DTYP, "asynOctet")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_WARNING_5")
     field(SCAN, "I/O Intr")
 }
-record(stringin, "$(P)$(T):alarm1_RBV")
+record(stringin, "$(P)$(R)alarm1_RBV")
 {
     field(DTYP, "asynOctet")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_ALARM_1")
     field(SCAN, "I/O Intr")
 }
-record(stringin, "$(P)$(T):alarm2_RBV")
+record(stringin, "$(P)$(R)alarm2_RBV")
 {
     field(DTYP, "asynOctet")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_ALARM_2")
     field(SCAN, "I/O Intr")
 }
-record(stringin, "$(P)$(T):alarm3_RBV")
+record(stringin, "$(P)$(R)alarm3_RBV")
 {
     field(DTYP, "asynOctet")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_ALARM_3")
     field(SCAN, "I/O Intr")
 }
-record(stringin, "$(P)$(T):alarm4_RBV")
+record(stringin, "$(P)$(R)alarm4_RBV")
 {
     field(DTYP, "asynOctet")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_ALARM_4")
     field(SCAN, "I/O Intr")
 }
-record(stringin, "$(P)$(T):alarm5_RBV")
+record(stringin, "$(P)$(R)alarm5_RBV")
 {
     field(DTYP, "asynOctet")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_ALARM_5")

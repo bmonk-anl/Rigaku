@@ -62,7 +62,7 @@ static const char *driverName = "Rigaku";
  */
 class Rigaku: public asynPortDriver {
 public:
-    Rikagu(const char *portName, const epicsUInt32 commType, const epicsUInt32 commPort);
+    Rigaku(const char *portName, const epicsUInt32 commType, const epicsUInt32 commPort);
     
     /* These are the methods that we override from asynPortDriver */
     virtual asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
@@ -74,8 +74,8 @@ public:
     //
     virtual asynStatus readOctet(asynUser *pasynUser, char* value, size_t maxChars, 
         size_t* nActual, int* eomReason);
-    virtual asynStatus disconnect(asynUser *pasynUser);
-    virtual asynStatus connect(asynUser *pasynUser);
+    // virtual asynStatus disconnect(asynUser *pasynUser);
+    // virtual asynStatus connect(asynUser *pasynUser);
     virtual ~Rigaku();
     // These should be private but are called from C
     virtual void pollerThread(void);

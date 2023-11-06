@@ -1,2 +1,2 @@
-$(P)$(T):voltage
-$(P)$(T):current
+$(P)$(R):voltage
+$(P)$(R):current

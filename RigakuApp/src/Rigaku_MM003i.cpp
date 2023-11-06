@@ -4,13 +4,14 @@
 #include <epicsString.h>
 #include <epicsThread.h>
 #include <asynOctetSyncIO.h>
+#include <string.h>
 
-#include "Rigaku_T96.h"
+#include "Rigaku_MM003i.h"
 
 // Is this needed?
 using namespace std;
 
-// This needs to come before the Rikagu constructor to avoid compiler errors
+// This needs to come before the Rigaku constructor to avoid compiler errors
 static void pollerThreadC(void * pPvt)
 {
   Rigaku *pRigaku = (Rigaku*)pPvt;
@@ -30,10 +31,10 @@ Rigaku::Rigaku(const char *portName, const epicsUInt32 commType, const epicsUInt
 	commType_ = commType;
 	commPort_ = commPort;
 	
-	createParam(voltageInValueString,   	asynParamFloat64, &voltageInValue_);
-	createParam(currentInValueString,	    asynParamFloat64, &currentInValue_);
-	createParam(voltageOutValueString,  	asynParamFloat64, &voltageOutValue_);
-	createParam(currentOutValueString,  	asynParamFloat64, &currentOutValue_);
+	createParam(voltageInValueString,   	asynParamFloat64, &voltageInVal_);
+	createParam(currentInValueString,	    asynParamFloat64, &currentInVal_);
+	createParam(voltageOutValueString,  	asynParamFloat64, &voltageOutVal_);
+	createParam(currentOutValueString,  	asynParamFloat64, &currentOutVal_);
 
 	createParam(setPowerString,		        asynParamInt32,   &setPowerOut_);
 	createParam(setDoorLockString,	        asynParamInt32,   &setDoorLockOut_);
@@ -94,10 +95,10 @@ Rigaku::Rigaku(const char *portName, const epicsUInt32 commType, const epicsUInt
 	connect(this->pasynUserSelf);
 	
   // 
-  readControllerConfig();
+  // readControllerConfig();
   
   //
-  readStageConfig();
+  // readStageConfig();
   
   /* 
    * Initialize parameters here that need to be set because init record order is
@@ -121,86 +122,86 @@ Rigaku::~Rigaku()
 	disconnect(this->pasynUserSelf);
 }
 
-asynStatus Rigaku::connect(asynUser *pasynUser)
-{
-	asynStatus status;
-	static const char *functionName = "connect";
-
-	// Disconnect first?
-	//disconnect(pasynUser);
-
-    asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
-        "%s:%s: Connecting...\n", driverName, functionName);
-	
-	/* 
-	 * Wrapped call to RigakuCommsDll.Comms.OpenComms()
-	 * 
-	 * OpenComms(
-	 *		true,    bool bConnect: set to true to connect and false to disconnect
-	 *		1,       UInt32 u32Commtype: Connection protocol (0: USB, 1: Serial)
-	 *		3);      UInt32 u32CommPort: Set to the COMM port that the controller is connected to. (e.g. COMM port 3)
-	 */
-	this->lock();
-	// OpenComms only works for Windows-style numbering of COM ports
-	//commStatus_ = OpenComms(true, 1, 1);
-	// USB on windows
-	//commStatus_ = OpenComms(true, 0, 6);
-	// A different call would be needed for Linux
-	//commStatus_ = OpenCommsFromDevice(true, serialPort_);
-	//
-	commStatus_ = OpenComms(true, commType_, commPort_);
-	
-	this->unlock();
-	
-    /* We found the controller and everything is OK.  Signal to asynManager that we are connected. */
-    status = pasynManager->exceptionConnect(this->pasynUserSelf);
-    if (status) {
-        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
-            "%s:%s: error calling pasynManager->exceptionConnect, error=%s\n",
-            driverName, functionName, pasynUserSelf->errorMessage);
-        return asynError;
-    }
-
- 	return asynSuccess;
-}
-
-asynStatus Rigaku::disconnect(asynUser *pasynUser)
-{
-	asynStatus status;
-	static const char *functionName = "disconnect";
-
-    asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
-        "%s:%s: Disconnecting...\n", driverName, functionName);
-
-	this->lock();
-	//commStatus_ = OpenCommsFromDevice(false, serialPort_);
-	// OpenComms only works for Windows-style numbering of COM ports
-	//commStatus_ = OpenComms(false, 1, 1);
-	// USB on Windows
-	//commStatus_ = OpenComms(false, 1, 6);
-	//
-	commStatus_ = OpenComms(false, commType_, commPort_);
-	
-	this->unlock();
-	
-    /* We found the controller and everything is OK.  Signal to asynManager that we are connected. */
-    status = pasynManager->exceptionDisconnect(this->pasynUserSelf);
-    if (status) {
-        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
-            "%s:%s: error calling pasynManager->exceptionDisonnect, error=%s\n",
-            driverName, functionName, pasynUserSelf->errorMessage);
-        return asynError;
-    }
-
- 	return asynSuccess;
-}
+// asynStatus Rigaku::connect(asynUser *pasynUser)
+// {
+// 	asynStatus status;
+// 	static const char *functionName = "connect";
+// 
+// 	// Disconnect first?
+// 	//disconnect(pasynUser);
+// 
+//     asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+//         "%s:%s: Connecting...\n", driverName, functionName);
+// 	
+// 	/* 
+// 	 * Wrapped call to RigakuCommsDll.Comms.OpenComms()
+// 	 * 
+// 	 * OpenComms(
+// 	 *		true,    bool bConnect: set to true to connect and false to disconnect
+// 	 *		1,       UInt32 u32Commtype: Connection protocol (0: USB, 1: Serial)
+// 	 *		3);      UInt32 u32CommPort: Set to the COMM port that the controller is connected to. (e.g. COMM port 3)
+// 	 */
+// 	this->lock();
+// 	// OpenComms only works for Windows-style numbering of COM ports
+// 	//commStatus_ = OpenComms(true, 1, 1);
+// 	// USB on windows
+// 	//commStatus_ = OpenComms(true, 0, 6);
+// 	// A different call would be needed for Linux
+// 	//commStatus_ = OpenCommsFromDevice(true, serialPort_);
+// 	//
+// 	commStatus_ = OpenComms(true, commType_, commPort_);
+// 	
+// 	this->unlock();
+// 	
+//     /* We found the controller and everything is OK.  Signal to asynManager that we are connected. */
+//     status = pasynManager->exceptionConnect(this->pasynUserSelf);
+//     if (status) {
+//         asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+//             "%s:%s: error calling pasynManager->exceptionConnect, error=%s\n",
+//             driverName, functionName, pasynUserSelf->errorMessage);
+//         return asynError;
+//     }
+// 
+//  	return asynSuccess;
+// }
+// 
+// asynStatus Rigaku::disconnect(asynUser *pasynUser)
+// {
+// 	asynStatus status;
+// 	static const char *functionName = "disconnect";
+// 
+//     asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+//         "%s:%s: Disconnecting...\n", driverName, functionName);
+// 
+// 	this->lock();
+// 	//commStatus_ = OpenCommsFromDevice(false, serialPort_);
+// 	// OpenComms only works for Windows-style numbering of COM ports
+// 	//commStatus_ = OpenComms(false, 1, 1);
+// 	// USB on Windows
+// 	//commStatus_ = OpenComms(false, 1, 6);
+// 	//
+// 	commStatus_ = OpenComms(false, commType_, commPort_);
+// 	
+// 	this->unlock();
+// 	
+//     /* We found the controller and everything is OK.  Signal to asynManager that we are connected. */
+//     status = pasynManager->exceptionDisconnect(this->pasynUserSelf);
+//     if (status) {
+//         asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+//             "%s:%s: error calling pasynManager->exceptionDisonnect, error=%s\n",
+//             driverName, functionName, pasynUserSelf->errorMessage);
+//         return asynError;
+//     }
+// 
+//  	return asynSuccess;
+// }
 
 // functions for writing and reading to device
 
-asynStatus Rigaku::writeReadRiagku()
+asynStatus Rigaku::writeReadRigaku()
 {
   size_t nread;
-  return writeReadController(outString_, inString_, sizeof(inString_), &nread, DEFAULT_CONTROLLER_TIMEOUT);
+  return writeReadRigaku(outString_, inString_, sizeof(inString_), &nread, DEFAULT_CONTROLLER_TIMEOUT);
 }
 
 asynStatus Rigaku::writeReadRigaku(const char *output, char *input, 
@@ -209,7 +210,7 @@ asynStatus Rigaku::writeReadRigaku(const char *output, char *input,
   size_t nwrite;
   asynStatus status;
   int eomReason;
-  // const char *functionName="writeReadController";
+  // const char *functionName="writeReadRigaku";
   
   status = pasynOctetSyncIO->writeRead(this->pasynUserSelf, output,
                                        strlen(output), input, maxChars, timeout,
@@ -227,12 +228,10 @@ void Rigaku::pollerThread()
 {
   /* This function runs in a separate thread.  It waits for the poll time. */
   static const char *functionName = "pollerThread";
-  // Other variable declarations
-  epicsInt32 ival;
-  epicsFloat64 fval;
 
+  // Other variable declarations
     asynStatus comStatus;
-    int xray_on, voltage, current, xray_ready, door_unlocked, door_open;
+    int xray_on, voltage, current, xray_ready, door_unlocked, door_open, shutter_open;
     char curError[7] = ""; // error will be 6 chars + 1 null char
     // char warnings[5][7]; // 5 warnings each 6 chars
     // char alarms[5][7]; // 5 alarms each 6 chars
@@ -250,7 +249,7 @@ void Rigaku::pollerThread()
         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'}
     };
-    char statusCode = '\0';
+    char statusCode;// = '\0';
   
   while (1)
   {
@@ -266,9 +265,9 @@ void Rigaku::pollerThread()
     comStatus = writeReadRigaku();
     if (comStatus) goto skip;
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", statusCode);
+    sscanf(inString_, "%*s %c", &statusCode);
     if (statusCode == 'C') {
-        sscanf(inString_, "GX_info_1 C %d %d %d", xray_on, voltage, current);
+        sscanf(inString_, "GX_info_1 C %d %d %d", &xray_on, &voltage, &current);
         setIntegerParam(statusXrayOn_, xray_on);
         setDoubleParam(voltageInVal_, (double)voltage);
         setDoubleParam(currentInVal_, (double)current);
@@ -290,9 +289,9 @@ void Rigaku::pollerThread()
     comStatus = writeReadRigaku();
     if (comStatus) goto skip;
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", statusCode);
+    sscanf(inString_, "%*s %c", &statusCode);
     if (statusCode == 'C') {
-        sscanf(inString_, "GX_info_xoff C %*d %*d %*d %d", xray_ready);
+        sscanf(inString_, "GX_info_xoff C %*d %*d %*d %d", &xray_ready);
         setIntegerParam(statusXrayReady_, xray_ready);
         // clear curError
         curError[0] = '\0';
@@ -312,9 +311,9 @@ void Rigaku::pollerThread()
     comStatus = writeReadRigaku();
     if (comStatus) goto skip;
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", statusCode);
+    sscanf(inString_, "%*s %c", &statusCode);
     if (statusCode == 'C') {
-        sscanf(inString_, "GX_info_chng_shutter C %*d %*d %*d %d", xray_ready);
+        sscanf(inString_, "GX_info_chng_shutter C %*d %*d %*d %d", &shutter_open);
         setIntegerParam(statusShutterOpen_, shutter_open);
         // clear curError
         curError[0] = '\0';
@@ -334,11 +333,11 @@ void Rigaku::pollerThread()
     comStatus = writeReadRigaku();
     if (comStatus) goto skip;
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", statusCode);
+    sscanf(inString_, "%*s %c", &statusCode);
     if (statusCode == 'C') {
-        sscanf(inString_, "GX_info_chng_rs1 C %d %d", door_unlocked, door_open);
+        sscanf(inString_, "GX_info_chng_rs1 C %d %d", &door_unlocked, &door_open);
         setIntegerParam(statusDoorUnlocked_, door_unlocked);
-        setIntegerParam(statusDoorOpen, door_open);
+        setIntegerParam(statusDoorOpen_, door_open);
         // clear curError
         curError[0] = '\0';
     } 
@@ -357,10 +356,10 @@ void Rigaku::pollerThread()
     comStatus = writeReadRigaku();
     if (comStatus) goto skip;
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", statusCode);
+    sscanf(inString_, "%*s %c", &statusCode);
     if (statusCode == 'C') {
         sscanf(inString_, "GX_info_warning C %*d %6s %6s %6s %6s %6s", 
-            warnings[0], warnings[1], warnings[2], warnings[3], warnings[4]);
+            &warnings[0][0], &warnings[1][0], &warnings[2][0], &warnings[3][0], &warnings[4][0]);
         setStringParam(statusWarnings_[0], warnings[0]);
         setStringParam(statusWarnings_[1], warnings[1]);
         setStringParam(statusWarnings_[2], warnings[2]);
@@ -384,10 +383,10 @@ void Rigaku::pollerThread()
     comStatus = writeReadRigaku();
     if (comStatus) goto skip;
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", statusCode);
+    sscanf(inString_, "%*s %c", &statusCode);
     if (statusCode == 'C') {
         sscanf(inString_, "GX_info_alarm C %*d %6s %6s %6s %6s %6s", 
-            alarms[0], alarms[1], alarms[2], alarms[3], alarms[4]);
+            &alarms[0][0], &alarms[1][0], &alarms[2][0], &alarms[3][0], &alarms[4][0]);
         setStringParam(statusAlarms_[0], alarms[0]);
         setStringParam(statusAlarms_[1], alarms[1]);
         setStringParam(statusAlarms_[2], alarms[2]);
@@ -518,28 +517,6 @@ void Rigaku::pollerThread()
 // 	return (status==0) ? asynSuccess : asynError;
 // }
 
-asynStatus Rigaku::setRampLimit(epicsFloat64 value)
-{
-	bool status;
-	static const char *functionName = "setRampLimit";
-	
-	/*
-	 * 	bool SetValue(
-	 * 		unsigned int u32ValueType, 
-	 * 		float fValue)
-	 * 
-	 * 	Returns true if set successfully, false otherwise.
-	 */ 
-	this->lock();
-	status = SetValue(u32Heater1LimitRW, (float) value);
-	this->unlock();
-	
-    asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, 
-			"%s:%s, port %s, value = %lf\n",
-			driverName, functionName, this->portName, value);
-	
-	return (status) ? asynSuccess : asynError;
-}
 
 /*
  *
@@ -594,7 +571,6 @@ asynStatus Rigaku::writeInt32(asynUser *pasynUser, epicsInt32 value)
 asynStatus Rigaku::setPower(epicsInt32 value)
 {
 
-	bool status;
 	static const char *functionName = "setPower";
 
     // only send if record processed with value of 1 
@@ -613,7 +589,7 @@ asynStatus Rigaku::setPower(epicsInt32 value)
     sprintf(outString_, "CX_power %d %d", (int)voltage, (int)current);
     comStatus = writeReadRigaku();
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", statusCode);
+    sscanf(inString_, "%*s %c", &statusCode);
     if (statusCode == 'E') {
         sscanf(inString_, "%*s E %6s", curError);
         setStringParam(statusCurError_, curError);
@@ -632,7 +608,6 @@ asynStatus Rigaku::setPower(epicsInt32 value)
 asynStatus Rigaku::setDoorLock(epicsInt32 value)
 {
 
-	bool status;
 	static const char *functionName = "setDoorLock";
 
     asynStatus comStatus;
@@ -644,7 +619,7 @@ asynStatus Rigaku::setDoorLock(epicsInt32 value)
     sprintf(outString_, "CX_door_lock1 %d", value);
     comStatus = writeReadRigaku();
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", statusCode);
+    sscanf(inString_, "%*s %c", &statusCode);
     if (statusCode == 'E') {
         sscanf(inString_, "%*s E %6s", curError);
         setStringParam(statusCurError_, curError);
@@ -662,7 +637,6 @@ asynStatus Rigaku::setDoorLock(epicsInt32 value)
 asynStatus Rigaku::setXrayOn(epicsInt32 value)
 {
 
-	bool status;
 	static const char *functionName = "setXrayOn";
 
     asynStatus comStatus;
@@ -674,7 +648,7 @@ asynStatus Rigaku::setXrayOn(epicsInt32 value)
     sprintf(outString_, "CX_xray %d", value);
     comStatus = writeReadRigaku();
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", statusCode);
+    sscanf(inString_, "%*s %c", &statusCode);
     if (statusCode == 'E') {
         sscanf(inString_, "%*s E %6s", curError);
         setStringParam(statusCurError_, curError);
@@ -692,7 +666,6 @@ asynStatus Rigaku::setXrayOn(epicsInt32 value)
 asynStatus Rigaku::setShutterOpen(epicsInt32 value)
 {
 
-	bool status;
 	static const char *functionName = "setShutterOpen";
 
     asynStatus comStatus;
@@ -704,7 +677,7 @@ asynStatus Rigaku::setShutterOpen(epicsInt32 value)
     sprintf(outString_, "CX_shutter %d", value);
     comStatus = writeReadRigaku();
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", statusCode);
+    sscanf(inString_, "%*s %c", &statusCode);
     if (statusCode == 'E') {
         sscanf(inString_, "%*s E %6s", curError);
         setStringParam(statusCurError_, curError);
@@ -719,10 +692,9 @@ asynStatus Rigaku::setShutterOpen(epicsInt32 value)
 	return comStatus;
 }
 
-asynStatus Rigaku::resetWarning(epicsInt32 value, i_warning)
+asynStatus Rigaku::resetWarning(epicsInt32 value, int i_warning)
 {
 
-    bool status;
     static const char *functionName = "resetWarning";
 
     // only send if record processed with value of 1 
@@ -734,14 +706,14 @@ asynStatus Rigaku::resetWarning(epicsInt32 value, i_warning)
     char warningCode[7] = "";
 
     // warningCode = warnings[i_warning];
-    getStringParam(statusWarnings_[i_warning], int warningCode);
+    getStringParam(statusWarnings_[i_warning], 10, warningCode);
 
     this->lock();
 
     sprintf(outString_, "CX_reset_warning %s", warningCode);
     comStatus = writeReadRigaku();
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", statusCode);
+    sscanf(inString_, "%*s %c", &statusCode);
     if (statusCode == 'E') {
         sscanf(inString_, "%*s E %6s", curError);
         setStringParam(statusCurError_, curError);
@@ -759,7 +731,6 @@ asynStatus Rigaku::resetWarning(epicsInt32 value, i_warning)
 asynStatus Rigaku::resetAlarm(epicsInt32 value, int i_alarm)
 {
 
-    bool status;
     static const char *functionName = "resetAlarm";
 
     // only send if record processed with value of 1 
@@ -770,14 +741,14 @@ asynStatus Rigaku::resetAlarm(epicsInt32 value, int i_alarm)
     char curError[7] = "";
     char alarmCode[7] = "";
 
-    getStringParam(statusAlarms_[i_alarm], alarmCode);
+    getStringParam(statusAlarms_[i_alarm], 10, alarmCode);
 
     this->lock();
 
     sprintf(outString_, "CX_reset_alarm %s", alarmCode);
     comStatus = writeReadRigaku();
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", statusCode);
+    sscanf(inString_, "%*s %c", &statusCode);
     if (statusCode == 'E') {
         sscanf(inString_, "%*s E %6s", curError);
         setStringParam(statusCurError_, curError);
