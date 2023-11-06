@@ -62,7 +62,7 @@ static const char *driverName = "Rigaku";
  */
 class Rigaku: public asynPortDriver {
 public:
-    Rigaku(const char *portName, const epicsUInt32 commType, const epicsUInt32 commPort);
+    Rigaku(const char *portName, const char *RigakuPortName);
     
     /* These are the methods that we override from asynPortDriver */
     virtual asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);

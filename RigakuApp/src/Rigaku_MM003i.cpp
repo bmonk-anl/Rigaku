@@ -18,7 +18,7 @@ static void pollerThreadC(void * pPvt)
   pRigaku->pollerThread();
 }
 
-Rigaku::Rigaku(const char *portName, const epicsUInt32 commType, const epicsUInt32 commPort) : asynPortDriver(portName, MAX_CONTROLLERS,
+Rigaku::Rigaku(const char *portName, const char *RigakuPortName) : asynPortDriver(portName, MAX_CONTROLLERS,
 		asynInt32Mask | asynFloat64Mask | asynDrvUserMask,
 		asynInt32Mask | asynFloat64Mask,
 		ASYN_MULTIDEVICE | ASYN_CANBLOCK, 1, /* ASYN_CANBLOCK=0, ASYN_MULTIDEVICE=1, autoConnect=1 */
@@ -26,10 +26,7 @@ Rigaku::Rigaku(const char *portName, const epicsUInt32 commType, const epicsUInt
     pollTime_(DEFAULT_POLL_TIME)
 {
 	static const char *functionName = "Rigaku";
-	
-	// Add validation in the future
-	commType_ = commType;
-	commPort_ = commPort;
+    asynStatus status;
 	
 	createParam(voltageInValueString,   	asynParamFloat64, &voltageInVal_);
 	createParam(currentInValueString,	    asynParamFloat64, &currentInVal_);
@@ -59,40 +56,9 @@ Rigaku::Rigaku(const char *portName, const epicsUInt32 commType, const epicsUInt
 	createParam(alarm4String, 		        asynParamOctet,   &statusAlarms_[3]);
 	createParam(alarm5String, 		        asynParamOctet,   &statusAlarms_[4]);
 
-  /*
-	createParam(temperatureInValueString,	asynParamFloat64, &temperatureInValue_);
-	createParam(rampLimitOutValueString,	asynParamFloat64, &rampLimitOutValue_);
-	createParam(rampLimitInValueString,		asynParamFloat64, &rampLimitInValue_);
-	createParam(rampRateOutValueString,		asynParamFloat64, &rampRateOutValue_);
-	createParam(rampRateInValueString,		asynParamFloat64, &rampRateInValue_);
-	createParam(heaterPowerInValueString,	asynParamFloat64, &heaterPowerInValue_);
-	createParam(heatingOutValueString,		asynParamInt32,   &heatingOutValue_);
-  //
-	createParam(lnpModeOutValueString,		asynParamInt32,   &lnpModeOutValue_);
-	createParam(lnpSpeedOutValueString,		asynParamInt32,   &lnpSpeedOutValue_);
-	createParam(lnpSpeedInValueString,		asynParamFloat64, &lnpSpeedInValue_);
-  //
-	createParam(vacuumOutValueString,		    asynParamInt32,   &vacuumOutValue_);
-	createParam(vacuumLimitOutValueString,	asynParamFloat64, &vacuumLimitOutValue_);
-	createParam(vacuumLimitInValueString,		asynParamFloat64, &vacuumLimitInValue_);
-	createParam(pressureInValueString,	    asynParamFloat64, &pressureInValue_);
-  //
-	createParam(controllerConfigInValueString,	asynParamInt32,   &controllerConfigInValue_);
-	createParam(controllerErrorInValueString,		asynParamInt32,   &controllerErrorInValue_);
-	createParam(controllerStatusInValueString,	asynParamInt32,   &controllerStatusInValue_);
-	createParam(stageConfigInValueString,		    asynParamInt32,   &stageConfigInValue_);
-  //
-  createParam(statusControllerErrorString,    asynParamInt32, &statusControllerError_);
-  createParam(statusRampSetpointString,       asynParamInt32, &statusRampSetpoint_);
-  createParam(statusRampStartedString,        asynParamInt32, &statusRampStarted_);
-  createParam(statusVacuumSetpointString,     asynParamInt32, &statusVacuumSetpoint_);
-  createParam(statusVacuumStartedString,      asynParamInt32, &statusVacuumStarted_);
-  createParam(statusLnpCoolingStartedString,  asynParamInt32, &statusLnpCoolingStarted_);
-  createParam(statusLnpCoolingAutoString,     asynParamInt32, &statusLnpCoolingAuto_);
-    */
-  
 	// Force the device to connect now
-	connect(this->pasynUserSelf);
+	//connect(this->pasynUserSelf);
+    status = pasynOctetSyncIO->connect(RigakuPortName, 0, &this->pasynUserSelf, NULL);
 	
   // 
   // readControllerConfig();
@@ -116,84 +82,10 @@ Rigaku::Rigaku(const char *portName, const epicsUInt32 commType, const epicsUInt
   //epicsThreadSleep(5.0);
 }
 
-Rigaku::~Rigaku()
-{
-	// Force the controller to disconnect
-	disconnect(this->pasynUserSelf);
-}
-
-// asynStatus Rigaku::connect(asynUser *pasynUser)
+// Rigaku::~Rigaku()
 // {
-// 	asynStatus status;
-// 	static const char *functionName = "connect";
-// 
-// 	// Disconnect first?
-// 	//disconnect(pasynUser);
-// 
-//     asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
-//         "%s:%s: Connecting...\n", driverName, functionName);
-// 	
-// 	/* 
-// 	 * Wrapped call to RigakuCommsDll.Comms.OpenComms()
-// 	 * 
-// 	 * OpenComms(
-// 	 *		true,    bool bConnect: set to true to connect and false to disconnect
-// 	 *		1,       UInt32 u32Commtype: Connection protocol (0: USB, 1: Serial)
-// 	 *		3);      UInt32 u32CommPort: Set to the COMM port that the controller is connected to. (e.g. COMM port 3)
-// 	 */
-// 	this->lock();
-// 	// OpenComms only works for Windows-style numbering of COM ports
-// 	//commStatus_ = OpenComms(true, 1, 1);
-// 	// USB on windows
-// 	//commStatus_ = OpenComms(true, 0, 6);
-// 	// A different call would be needed for Linux
-// 	//commStatus_ = OpenCommsFromDevice(true, serialPort_);
-// 	//
-// 	commStatus_ = OpenComms(true, commType_, commPort_);
-// 	
-// 	this->unlock();
-// 	
-//     /* We found the controller and everything is OK.  Signal to asynManager that we are connected. */
-//     status = pasynManager->exceptionConnect(this->pasynUserSelf);
-//     if (status) {
-//         asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
-//             "%s:%s: error calling pasynManager->exceptionConnect, error=%s\n",
-//             driverName, functionName, pasynUserSelf->errorMessage);
-//         return asynError;
-//     }
-// 
-//  	return asynSuccess;
-// }
-// 
-// asynStatus Rigaku::disconnect(asynUser *pasynUser)
-// {
-// 	asynStatus status;
-// 	static const char *functionName = "disconnect";
-// 
-//     asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
-//         "%s:%s: Disconnecting...\n", driverName, functionName);
-// 
-// 	this->lock();
-// 	//commStatus_ = OpenCommsFromDevice(false, serialPort_);
-// 	// OpenComms only works for Windows-style numbering of COM ports
-// 	//commStatus_ = OpenComms(false, 1, 1);
-// 	// USB on Windows
-// 	//commStatus_ = OpenComms(false, 1, 6);
-// 	//
-// 	commStatus_ = OpenComms(false, commType_, commPort_);
-// 	
-// 	this->unlock();
-// 	
-//     /* We found the controller and everything is OK.  Signal to asynManager that we are connected. */
-//     status = pasynManager->exceptionDisconnect(this->pasynUserSelf);
-//     if (status) {
-//         asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
-//             "%s:%s: error calling pasynManager->exceptionDisonnect, error=%s\n",
-//             driverName, functionName, pasynUserSelf->errorMessage);
-//         return asynError;
-//     }
-// 
-//  	return asynSuccess;
+// 	// Force the controller to disconnect
+// 	disconnect(this->pasynUserSelf);
 // }
 
 // functions for writing and reading to device
@@ -410,113 +302,6 @@ void Rigaku::pollerThread()
     epicsThreadSleep(pollTime_);
   }
 }
-
-
-/*
- *
- * readFloat64
- *
- * 
- *
- */
-// asynStatus Rigaku::readFloat64(asynUser *pasynUser, epicsFloat64 *value)
-// {
-//     int function = pasynUser->reason;
-//     asynStatus status;
-//     static const char *functionName = "readFloat64";
-// 
-//     asynPrint(pasynUser, ASYN_TRACEIO_DRIVER, 
-// 			"%s:%s, port %s, function = %d\n",
-// 			driverName, functionName, this->portName, function);
-// 
-// 	if (function == rampLimitInValue_) {
-// 
-// 		status = readRampLimit(value);
-// 
-// 	} else if (function == rampRateInValue_) {
-// 
-// 		// Read the ramp rate from the controller (C/min)
-// 		status = readRampRate(value);
-// 
-// 	} else if (function == vacuumLimitInValue_) {
-// 
-// 		// Read the vacuum limit from the controller (mBar)
-// 		status = readVacuumLimit(value);
-// 
-// 	} else {
-// 		status = asynPortDriver::readFloat64(pasynUser,value);
-// 	}
-// 
-// 	// Update the temperatureInValue_ parameter
-// 	setDoubleParam(function, *value);
-// 	
-// 	callParamCallbacks();
-// 
-// 	return (status==0) ? asynSuccess : asynError;
-// }
-
-// asynStatus Rigaku::readRampLimit(epicsFloat64 *value)
-// {
-// 	static const char *functionName = "readRampLimit";
-// 	
-// 	this->lock();
-// 	*value = GetValue(u32Heater1LimitRW);
-// 	this->unlock();
-// 	
-//     asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, 
-// 			"%s:%s, port %s, value = %lf\n",
-// 			driverName, functionName, this->portName, *value);
-// 	
-// 	return asynSuccess;
-// }
-
-
-/*
- *
- * writeFloat64
- *
- */
-// asynStatus Rigaku::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
-// {
-// 	int function = pasynUser->reason;
-// 	asynStatus status;
-// 	static const char *functionName = "writeFloat64";
-// 
-//     asynPrint(pasynUser, ASYN_TRACEIO_DRIVER, 
-// 			"%s:%s, port %s, function = %d\n",
-// 			driverName, functionName, this->portName, function);
-// 
-// 	// Set the new value; it can be reverted later if commands fail
-// 	setDoubleParam(function, value);
-// 
-// 	if (function == voltageOutVal_) {
-// 
-// 		// set the desired voltage 
-// 		status = setRampLimit(value);
-// 
-// 	} else if (function == currentOutVal_) { 
-// 
-// 		// set the desired ramp rate
-// 		status = setRampRate(value);
-// 	
-// 	} else {
-// 		status = asynPortDriver::writeFloat64(pasynUser,value);
-// 	}
-// 
-// 	callParamCallbacks();
-// 	if (status == 0) {
-// 		asynPrint(pasynUser, ASYN_TRACEIO_DRIVER, 
-//              "%s:%s, port %s, wrote %lf\n",
-//              driverName, functionName, this->portName, value);
-// 	} else {
-// 		asynPrint(pasynUser, ASYN_TRACE_ERROR, 
-//              "%s:%s, port %s, ERROR writing %lf, status=%d\n",
-//              driverName, functionName, this->portName, value, status);
-// 	}
-// 	
-// 	return (status==0) ? asynSuccess : asynError;
-// }
-
 
 /*
  *
@@ -763,156 +548,33 @@ asynStatus Rigaku::resetAlarm(epicsInt32 value, int i_alarm)
     return comStatus;
 }
 
-/*
- *
- * readInt32
- *
- */
-// asynStatus Rigaku::readInt32(asynUser *pasynUser, epicsInt32 *value)
-// {
-// 	int function = pasynUser->reason;
-// 	asynStatus status = asynSuccess;
-// 	static const char *functionName = "readInt32";
-// 
-//     asynPrint(pasynUser, ASYN_TRACEIO_DRIVER, 
-// 			"%s:%s, port %s, function = %d\n",
-// 			driverName, functionName, this->portName, function);
-// 
-// 	// Get the current value; it can be reverted later if commands fail
-// 	getIntegerParam(function, value);
-// 
-// 	if (function == controllerConfigInValue_) {
-//     
-// 		status = readControllerConfig();
-//     
-// 	} else if (function == controllerErrorInValue_) {
-//     
-//     status = readControllerError();
-//     
-// 	} else if (function == controllerStatusInValue_) {
-//     
-//     status = readControllerStatus();
-//     
-// 	} else if (function == stageConfigInValue_) {
-//     
-//     status = readStageConfig();
-//     
-//   }
-// 	
-//   // Increment the value so we can see that records are processing
-//   if (*value > 100000)
-//     *value = 0;
-//   else
-//     *value += 1;
-//   
-// 	callParamCallbacks();
-// 	if (status == 0) {
-// 		asynPrint(pasynUser, ASYN_TRACEIO_DRIVER, 
-//              "%s:%s, port %s, wrote %d\n",
-//              driverName, functionName, this->portName, value);
-// 	} else {
-// 		asynPrint(pasynUser, ASYN_TRACE_ERROR, 
-//              "%s:%s, port %s, ERROR writing %d, status=%d\n",
-//              driverName, functionName, this->portName, value, status);
-// 	}
-// 	
-// 	return (status==0) ? asynSuccess : asynError;
-// }
-
-// asynStatus Rigaku::readControllerConfig()
-// {
-// 	static const char *functionName = "readControllerConfig";
-// 	
-// 	this->lock();
-// 	this->controllerConfig_ = GetControllerConfig();
-// 	
-//   if (controllerConfig_ & ( (epicsUInt64)1 << (int)u64LnpReady ) )
-//     controllerLnpReady_ = 1;
-//   else
-//     controllerLnpReady_ = 0;
-//   
-//   if (controllerConfig_ & ( (epicsUInt64)1 << (int)u64VacuumReady ) )
-//     controllerVacuumReady_ = 1;
-//   else
-//     controllerVacuumReady_ = 0;
-//   
-//   this->unlock();
-// 	
-//     asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, 
-// 			"%s:%s, port %s, controllerConfig_ = %llx; controllerLnpReady_ = %d\n",
-// 			driverName, functionName, this->portName, this->controllerConfig_, this->controllerLnpReady_);
-// 	
-// 	return asynSuccess;
-// }
-
-// asynStatus Rigaku::readControllerError()
-// {
-// 	static const char *functionName = "readControllerError";
-// 	
-// 	this->lock();
-// 	this->controllerError_ = GetControllerError();
-// 	this->unlock();
-// 	
-//     asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, 
-// 			"%s:%s, port %s, controllerError_ = %lx\n",
-// 			driverName, functionName, this->portName, this->controllerError_);
-// 	
-// 	return asynSuccess;
-// }
-// 
-// asynStatus Rigaku::readControllerStatus()
-// {
-// 	static const char *functionName = "readControllerStatus";
-// 	
-// 	this->lock();
-// 	this->controllerStatus_ = GetStatus();
-// 	this->unlock();
-// 	
-//     asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, 
-// 			"%s:%s, port %s, controllerStatus_ = %llx\n",
-// 			driverName, functionName, this->portName, this->controllerStatus_);
-// 	
-// 	return asynSuccess;
-// }
-
-
 void Rigaku::report(FILE *fp, int details)
 {
     asynPortDriver::report(fp, details);
     fprintf(fp, "* Port: %s, commType=%d, commPort=%d, commStatus=%d\n", 
         this->portName, commType_, commPort_, commStatus_);
 	// if (details >= 1) {
-    //     // fprintf(fp, "  controller config = %llx\n", controllerConfig_);
-    //     // fprintf(fp, "\tLNP Ready = %d\n", controllerLnpReady_);
-    //     // fprintf(fp, "\tVac Ready = %d\n", controllerVacuumReady_);
-    //     // fprintf(fp, "  controller error  = %lx\n", controllerError_);
-    //     // fprintf(fp, "  controller status = %llx\n", controllerStatus_);
-    //     // fprintf(fp, "  stage config      = %llx\n", stageConfig_);
-    //     // fprintf(fp, "\tLNP Manual = %d\n", stageLnpManual_);
-    //     // fprintf(fp, "\tLNP Auto = %d\n", stageLnpAuto_);
     //     // fprintf(fp, "\tVacuum = %d\n", stageVacuum_);
     // }
     fprintf(fp, "\n");
 }
 
 
-extern "C" int RigakuConfig(const char *portName, const epicsUInt32 commType, const epicsUInt32 commPort)
+extern "C" int RigakuConfig(const char *portName, const char *RigakuPortName)
 {
-    Rigaku *pRigaku = new Rigaku(portName, commType, commPort);
+    Rigaku *pRigaku = new Rigaku(portName, RigakuPortName);
     pRigaku = NULL; /* This is just to avoid compiler warnings */
     return(asynSuccess);
 }
 
 static const iocshArg rigakuArg0 = { "Port name", iocshArgString};
-static const iocshArg rigakuArg1 = { "Comm Type", iocshArgInt};
-static const iocshArg rigakuArg2 = { "Comm port", iocshArgInt};
-static const iocshArg * const rigakuArgs[3] = {&rigakuArg0,
-											   &rigakuArg1,
-											   &rigakuArg2};
-static const iocshFuncDef rigakuFuncDef = {"RigakuConfig", 3, rigakuArgs};
+static const iocshArg rigakuArg1 = { "Rigaku port name", iocshArgString};
+static const iocshArg * const rigakuArgs[2] = {&rigakuArg0,
+											   &rigakuArg1};
+static const iocshFuncDef rigakuFuncDef = {"RigakuConfig", 2, rigakuArgs};
 static void rigakuCallFunc(const iocshArgBuf *args)
 {
-    RigakuConfig(args[0].sval, args[1].ival, args[2].ival);
+    RigakuConfig(args[0].sval, args[1].sval);
 }
 
 void drvRigakuRegister(void)
