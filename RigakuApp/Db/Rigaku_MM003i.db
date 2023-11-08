@@ -23,7 +23,7 @@ record(ao, "$(P)$(R)voltage")
     field(DTYP, "asynFloat64")
     field(OUT,  "@asyn($(PORT),$(ADDR))VOLTAGE_OUT_VALUE")
     field(LINR, "NO CONVERSION")
-	field(PREC, "1")
+	field(PREC, "0")
 	field(EGU,  "V")
     field(SCAN, "Passive")
 }
@@ -33,7 +33,7 @@ record(ao, "$(P)$(R)current")
     field(DTYP, "asynFloat64")
     field(OUT,  "@asyn($(PORT),$(ADDR))CURRENT_OUT_VALUE")
     field(LINR, "NO CONVERSION")
-	field(PREC, "1")
+	field(PREC, "0")
 	field(EGU,  "uA")
     field(SCAN, "Passive")
 }
@@ -173,67 +173,89 @@ record(bi, "$(P)$(R)doorOpen_RBV")
 
 record(stringin, "$(P)$(R)curError_RBV")
 {
-    field(DTYP, "asynOctet")
+    field(DTYP, "asynOctetRead")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_CUR_ERROR")
+    #field(FTVL, "CHAR")
+    #field(NELM, "256")
     field(SCAN, "I/O Intr")
 }
 record(stringin, "$(P)$(R)warning1_RBV")
 {
-    field(DTYP, "asynOctet")
+    field(DTYP, "asynOctetRead")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_WARNING_1")
+    #field(FTVL, "CHAR")
+    #field(NELM, "256")
     field(SCAN, "I/O Intr")
 }
 record(stringin, "$(P)$(R)warning2_RBV")
 {
-    field(DTYP, "asynOctet")
+    field(DTYP, "asynOctetRead")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_WARNING_2")
+    #field(FTVL, "CHAR")
+    #field(NELM, "256")
     field(SCAN, "I/O Intr")
 }
 record(stringin, "$(P)$(R)warning3_RBV")
 {
-    field(DTYP, "asynOctet")
+    field(DTYP, "asynOctetRead")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_WARNING_3")
+    #field(FTVL, "CHAR")
+    #field(NELM, "256")
     field(SCAN, "I/O Intr")
 }
 record(stringin, "$(P)$(R)warning4_RBV")
 {
-    field(DTYP, "asynOctet")
+    field(DTYP, "asynOctetRead")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_WARNING_4")
+    #field(FTVL, "CHAR")
+    #field(NELM, "256")
     field(SCAN, "I/O Intr")
 }
 record(stringin, "$(P)$(R)warning5_RBV")
 {
-    field(DTYP, "asynOctet")
+    field(DTYP, "asynOctetRead")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_WARNING_5")
+    #field(FTVL, "CHAR")
+    #field(NELM, "256")
     field(SCAN, "I/O Intr")
 }
 record(stringin, "$(P)$(R)alarm1_RBV")
 {
-    field(DTYP, "asynOctet")
+    field(DTYP, "asynOctetRead")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_ALARM_1")
+    #field(FTVL, "CHAR")
+    #field(NELM, "256")
     field(SCAN, "I/O Intr")
 }
 record(stringin, "$(P)$(R)alarm2_RBV")
 {
-    field(DTYP, "asynOctet")
+    field(DTYP, "asynOctetRead")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_ALARM_2")
+    #field(FTVL, "CHAR")
+    #field(NELM, "256")
     field(SCAN, "I/O Intr")
 }
 record(stringin, "$(P)$(R)alarm3_RBV")
 {
-    field(DTYP, "asynOctet")
+    field(DTYP, "asynOctetRead")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_ALARM_3")
+    #field(FTVL, "CHAR")
+    #field(NELM, "256")
     field(SCAN, "I/O Intr")
 }
 record(stringin, "$(P)$(R)alarm4_RBV")
 {
-    field(DTYP, "asynOctet")
+    field(DTYP, "asynOctetRead")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_ALARM_4")
+    #field(FTVL, "CHAR")
+    #field(NELM, "256")
     field(SCAN, "I/O Intr")
 }
 record(stringin, "$(P)$(R)alarm5_RBV")
 {
-    field(DTYP, "asynOctet")
+    field(DTYP, "asynOctetRead")
     field(INP,  "@asyn($(PORT),$(ADDR))STATUS_ALARM_5")
+    #field(FTVL, "CHAR")
+    #field(NELM, "256")
     field(SCAN, "I/O Intr")
 }

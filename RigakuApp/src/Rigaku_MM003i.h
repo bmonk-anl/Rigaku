@@ -72,11 +72,11 @@ public:
     // value - pointer to string
     // maxChars - max num of characters to read
     //
-    virtual asynStatus readOctet(asynUser *pasynUser, char* value, size_t maxChars, 
-        size_t* nActual, int* eomReason);
+    // virtual asynStatus readOctet(asynUser *pasynUser, char* value, size_t maxChars, 
+    //    size_t* nActual, int* eomReason);
     // virtual asynStatus disconnect(asynUser *pasynUser);
     // virtual asynStatus connect(asynUser *pasynUser);
-    virtual ~Rigaku();
+    // virtual ~Rigaku();
     // These should be private but are called from C
     virtual void pollerThread(void);
 
@@ -102,11 +102,13 @@ protected:
     int statusDoorOpen_;
     // string index values
     int statusCurError_;
-    int statusAlarms_[5];
     int statusWarnings_[5];
+    int statusAlarms_[5];
 
 	#define FIRST_RIGAKU_PARAM voltageInVal_;
-	#define LAST_RIGAKU_PARAM statusWarnings_[5];
+	#define LAST_RIGAKU_PARAM statusAlarms_[4];
+
+    asynUser* pasynUserRigaku_;
 
 private:
     char outString_[256];
@@ -134,9 +136,7 @@ private:
 
 
   double pollTime_;
-	epicsUInt32 commType_;
-	epicsUInt32 commPort_;
-	int commStatus_;
+	// int commStatus_;
 	// float temperatureRbv_;
 	// char* wrapperVersion_;
 	// char* libraryVersion_;
@@ -147,6 +147,7 @@ private:
   
 };
 
-#define NUM_PARAMS ((int)(&LAST_RIGAKU_PARAM - &FIRST_RIGAKU_PARAM + 1))
+// #define NUM_PARAMS ((int)(&LAST_RIGAKU_PARAM - &FIRST_RIGAKU_PARAM + 1))
+#define NUM_PARAMS 34
 
 

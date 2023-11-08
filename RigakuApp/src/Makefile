@@ -20,7 +20,7 @@ DBD += RigakuSupport.dbd
 
 # specify all source files to be compiled and added to the library
 Rigaku_SRCS += Rigaku_MM003i.cpp
-Rigaku_LIBS_Linux += Wrapper
+# Rigaku_LIBS_Linux += Wrapper
 # ifeq (win, $(findstring win, $(T_A)))
 # Rigaku_LIBS += CommsWrapper
 # endif

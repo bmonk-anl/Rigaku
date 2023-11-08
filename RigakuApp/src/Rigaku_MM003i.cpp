@@ -19,8 +19,8 @@ static void pollerThreadC(void * pPvt)
 }
 
 Rigaku::Rigaku(const char *portName, const char *RigakuPortName) : asynPortDriver(portName, MAX_CONTROLLERS,
-		asynInt32Mask | asynFloat64Mask | asynDrvUserMask,
-		asynInt32Mask | asynFloat64Mask,
+		asynInt32Mask | asynFloat64Mask | asynDrvUserMask | asynOctetMask,
+		asynInt32Mask | asynFloat64Mask | asynOctetMask,
 		ASYN_MULTIDEVICE | ASYN_CANBLOCK, 1, /* ASYN_CANBLOCK=0, ASYN_MULTIDEVICE=1, autoConnect=1 */
 		0, 0), /* Default priority and stack size */
     pollTime_(DEFAULT_POLL_TIME)
@@ -37,6 +37,17 @@ Rigaku::Rigaku(const char *portName, const char *RigakuPortName) : asynPortDrive
 	createParam(setDoorLockString,	        asynParamInt32,   &setDoorLockOut_);
 	createParam(setXrayOnString,	        asynParamInt32,   &setXrayOnOut_);
 	createParam(setShutterOpenString,       asynParamInt32,   &setShutterOpenOut_);
+
+	createParam(resetWarning1String,        asynParamInt32,   &resetWarningsOut_[0]);
+	createParam(resetWarning2String,        asynParamInt32,   &resetWarningsOut_[1]);
+	createParam(resetWarning3String,        asynParamInt32,   &resetWarningsOut_[2]);
+	createParam(resetWarning4String,        asynParamInt32,   &resetWarningsOut_[3]);
+	createParam(resetWarning5String,        asynParamInt32,   &resetWarningsOut_[4]);
+	createParam(resetAlarm1String,          asynParamInt32,   &resetAlarmsOut_[0]);
+	createParam(resetAlarm2String,          asynParamInt32,   &resetAlarmsOut_[1]);
+	createParam(resetAlarm3String,          asynParamInt32,   &resetAlarmsOut_[2]);
+	createParam(resetAlarm4String,          asynParamInt32,   &resetAlarmsOut_[3]);
+	createParam(resetAlarm5String,          asynParamInt32,   &resetAlarmsOut_[4]);
 
 	createParam(xrayReadyString,		    asynParamInt32,   &statusXrayReady_);
 	createParam(xrayOnString,   		    asynParamInt32,   &statusXrayOn_);
@@ -58,7 +69,7 @@ Rigaku::Rigaku(const char *portName, const char *RigakuPortName) : asynPortDrive
 
 	// Force the device to connect now
 	//connect(this->pasynUserSelf);
-    status = pasynOctetSyncIO->connect(RigakuPortName, 0, &this->pasynUserSelf, NULL);
+    status = pasynOctetSyncIO->connect(RigakuPortName, 0, &pasynUserRigaku_, NULL);
 	
   // 
   // readControllerConfig();
@@ -85,7 +96,7 @@ Rigaku::Rigaku(const char *portName, const char *RigakuPortName) : asynPortDrive
 // Rigaku::~Rigaku()
 // {
 // 	// Force the controller to disconnect
-// 	disconnect(this->pasynUserSelf);
+// 	//disconnect(this->pasynUserSelf);
 // }
 
 // functions for writing and reading to device
@@ -104,7 +115,7 @@ asynStatus Rigaku::writeReadRigaku(const char *output, char *input,
   int eomReason;
   // const char *functionName="writeReadRigaku";
   
-  status = pasynOctetSyncIO->writeRead(this->pasynUserSelf, output,
+  status = pasynOctetSyncIO->writeRead(pasynUserRigaku_, output,
                                        strlen(output), input, maxChars, timeout,
                                        &nwrite, nread, &eomReason);
                         
@@ -128,19 +139,19 @@ void Rigaku::pollerThread()
     // char warnings[5][7]; // 5 warnings each 6 chars
     // char alarms[5][7]; // 5 alarms each 6 chars
     char warnings[5][7] = {
-        {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
-        {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
-        {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
-        {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
-        {'\0', '\0', '\0', '\0', '\0', '\0', '\0'}
-    };
-    char alarms[5][7] = {
-        {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
-        {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
-        {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
-        {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
-        {'\0', '\0', '\0', '\0', '\0', '\0', '\0'}
-    };
+         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
+         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
+         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
+         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
+         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'}
+     };
+  char alarms[5][7] = {
+         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
+         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
+         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
+         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
+         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'}
+     };
     char statusCode;// = '\0';
   
   while (1)
@@ -148,18 +159,18 @@ void Rigaku::pollerThread()
     lock();
 
     // get generator info
-    // send format: GX_info_1
-    // receive format (no error): GX_info_1 C <xrays on/off (1/0)> <voltage (0-60000 V)> <current (0-30000 uA)>
-    // <generator warning present (1/0)> <generator alarm present (1/0)> <shutter status change (1/0)> 
+    // send format: EXE(GX_info_1)
+    // receive format (no err): EXE(GX_info_1 C <xrays on/off (1/0)> <voltage (0-60000 V)> <current (0-30000 uA)>
+    // <generator warning present (1/0)> <generator alarm present (1/0)> <shutter status change (1/0)>)
     // <radiation safety change (1/0)> 
     // receive format (error): GX_info_1 E <error code> 
-    sprintf(outString_, "GX_info_1");
+    sprintf(outString_, "EXE(GX_info_1)");
     comStatus = writeReadRigaku();
     if (comStatus) goto skip;
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", &statusCode);
+    sscanf(inString_, "EXE(%*s %c)", &statusCode);
     if (statusCode == 'C') {
-        sscanf(inString_, "GX_info_1 C %d %d %d", &xray_on, &voltage, &current);
+        sscanf(inString_, "EXE(GX_info_1 C %d %d %d", &xray_on, &voltage, &current);
         setIntegerParam(statusXrayOn_, xray_on);
         setDoubleParam(voltageInVal_, (double)voltage);
         setDoubleParam(currentInVal_, (double)current);
@@ -167,7 +178,7 @@ void Rigaku::pollerThread()
         curError[0] = '\0';
     } 
     else if (statusCode == 'E') {
-        sscanf(inString_, "%*s E %6s", curError);
+        sscanf(inString_, "EXE(%*s E %6s)", curError);
         setStringParam(statusCurError_, curError);
     }
     // clear status code
@@ -177,19 +188,19 @@ void Rigaku::pollerThread()
     // send format: GX_info_xoff
     // receive format (no error): GX_info_xoff C <n/a> <n/a> <n/a> <xrays ready (1/0)>
     // receive format (error): GX_info_xoff E <error code>
-    sprintf(outString_, "GX_info_xoff");
+    sprintf(outString_, "EXE(GX_info_xoff)");
     comStatus = writeReadRigaku();
     if (comStatus) goto skip;
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", &statusCode);
+    sscanf(inString_, "EXE(%*s %c)", &statusCode);
     if (statusCode == 'C') {
-        sscanf(inString_, "GX_info_xoff C %*d %*d %*d %d", &xray_ready);
-        setIntegerParam(statusXrayReady_, xray_ready);
+        sscanf(inString_, "EXE(GX_info_xoff C %*d %*d %*d %d", &xray_ready);
+        setIntegerParam(statusXrayReady_, (epicsInt32)xray_ready);
         // clear curError
         curError[0] = '\0';
     } 
     else if (statusCode == 'E') {
-        sscanf(inString_, "%*s E %6s", curError);
+        sscanf(inString_, "EXE(%*s E %6s)", curError);
         setStringParam(statusCurError_, curError);
     }
     // clear status code
@@ -199,19 +210,19 @@ void Rigaku::pollerThread()
     // send format: GX_info_chng_shutter 
     // receive format (no error): GX_info_chng_shutter C <n/a> <n/a> <n/a> <shutter open (1/0)>
     // receive format (error): GX_info_chng_shutter E <error code>
-    sprintf(outString_, "GX_info_chng_shutter");
+    sprintf(outString_, "EXE(GX_info_chng_shutter)");
     comStatus = writeReadRigaku();
     if (comStatus) goto skip;
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", &statusCode);
+    sscanf(inString_, "EXE(%*s %c)", &statusCode);
     if (statusCode == 'C') {
-        sscanf(inString_, "GX_info_chng_shutter C %*d %*d %*d %d", &shutter_open);
+        sscanf(inString_, "EXE(GX_info_chng_shutter C %*d %*d %*d %d", &shutter_open);
         setIntegerParam(statusShutterOpen_, shutter_open);
         // clear curError
         curError[0] = '\0';
     } 
     else if (statusCode == 'E') {
-        sscanf(inString_, "%*s E %6s", curError);
+        sscanf(inString_, "EXE(%*s E %6s)", curError);
         setStringParam(statusCurError_, curError);
     }
     // clear status code
@@ -221,20 +232,20 @@ void Rigaku::pollerThread()
     // send format: GX_info_chng_rs1 
     // receive format (no error): GX_info_chng_rs1 C <door unlocked (1/0)> <door open (1/0)> 
     // receive format (error): GX_info_chng_rs1 E <error code>
-    sprintf(outString_, "GX_info_chng_rs1");
+    sprintf(outString_, "EXE(GX_info_chng_rs1)");
     comStatus = writeReadRigaku();
     if (comStatus) goto skip;
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", &statusCode);
+    sscanf(inString_, "EXE(%*s %c)", &statusCode);
     if (statusCode == 'C') {
-        sscanf(inString_, "GX_info_chng_rs1 C %d %d", &door_unlocked, &door_open);
+        sscanf(inString_, "EXE(GX_info_chng_rs1 C %d %d", &door_unlocked, &door_open);
         setIntegerParam(statusDoorUnlocked_, door_unlocked);
         setIntegerParam(statusDoorOpen_, door_open);
         // clear curError
         curError[0] = '\0';
     } 
     else if (statusCode == 'E') {
-        sscanf(inString_, "%*s E %6s", curError);
+        sscanf(inString_, "EXE(%*s E %6s)", curError);
         setStringParam(statusCurError_, curError);
     }
     // clear status code
@@ -244,14 +255,14 @@ void Rigaku::pollerThread()
     // send format: GX_info_warning 
     // receive format (no error): GX_info_warning C <number of warnings> <warning 1> <warning 2> ... 
     // receive format (error): GX_info_warning E <error code>
-    sprintf(outString_, "GX_info_warning");
+    sprintf(outString_, "EXE(GX_info_warning)");
     comStatus = writeReadRigaku();
     if (comStatus) goto skip;
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", &statusCode);
+    sscanf(inString_, "EXE(%*s %c)", &statusCode);
     if (statusCode == 'C') {
-        sscanf(inString_, "GX_info_warning C %*d %6s %6s %6s %6s %6s", 
-            &warnings[0][0], &warnings[1][0], &warnings[2][0], &warnings[3][0], &warnings[4][0]);
+        sscanf(inString_, "EXE(GX_info_warning C %6[^ )] %6[^ )] %6[^ )] %6[^ )] %6[^ )])", 
+            warnings[0], warnings[1], warnings[2], warnings[3], warnings[4]);
         setStringParam(statusWarnings_[0], warnings[0]);
         setStringParam(statusWarnings_[1], warnings[1]);
         setStringParam(statusWarnings_[2], warnings[2]);
@@ -261,7 +272,7 @@ void Rigaku::pollerThread()
         curError[0] = '\0';
     } 
     else if (statusCode == 'E') {
-        sscanf(inString_, "%*s E %6s", curError);
+        sscanf(inString_, "EXE(%*s E %6s)", curError);
         setStringParam(statusCurError_, curError);
     }
     // clear status code
@@ -271,14 +282,14 @@ void Rigaku::pollerThread()
     // send format: GX_info_alarm
     // receive format (no error): GX_info_alarm C <number of alarms> <alarm 1> <alarm 2> ... 
     // receive format (error): GX_info_alarm E <error code>
-    sprintf(outString_, "GX_info_alarm");
+    sprintf(outString_, "EXE(GX_info_alarm)");
     comStatus = writeReadRigaku();
     if (comStatus) goto skip;
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", &statusCode);
+    sscanf(inString_, "EXE(%*s %c)", &statusCode);
     if (statusCode == 'C') {
-        sscanf(inString_, "GX_info_alarm C %*d %6s %6s %6s %6s %6s", 
-            &alarms[0][0], &alarms[1][0], &alarms[2][0], &alarms[3][0], &alarms[4][0]);
+        sscanf(inString_, "EXE(GX_info_alarm C %6[^ )] %6[^ )] %6[^ )] %6[^ )] %6[^ )])", 
+            alarms[0], alarms[1], alarms[2], alarms[3], alarms[4]);
         setStringParam(statusAlarms_[0], alarms[0]);
         setStringParam(statusAlarms_[1], alarms[1]);
         setStringParam(statusAlarms_[2], alarms[2]);
@@ -288,7 +299,7 @@ void Rigaku::pollerThread()
         curError[0] = '\0';
     } 
     else if (statusCode == 'E') {
-        sscanf(inString_, "%*s E %6s", curError);
+        sscanf(inString_, "EXE(%*s E %6s)", curError);
         setStringParam(statusCurError_, curError);
     }
     // clear status code
@@ -371,12 +382,12 @@ asynStatus Rigaku::setPower(epicsInt32 value)
 	
 	this->lock();
 
-    sprintf(outString_, "CX_power %d %d", (int)voltage, (int)current);
+    sprintf(outString_, "EXE(CX_power %d %d)", (int)voltage, (int)current);
     comStatus = writeReadRigaku();
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", &statusCode);
+    sscanf(inString_, "EXE(%*s %c)", &statusCode);
     if (statusCode == 'E') {
-        sscanf(inString_, "%*s E %6s", curError);
+        sscanf(inString_, "EXE(%*s E %6s)", curError);
         setStringParam(statusCurError_, curError);
     }
 
@@ -401,12 +412,12 @@ asynStatus Rigaku::setDoorLock(epicsInt32 value)
 
 	this->lock();
 
-    sprintf(outString_, "CX_door_lock1 %d", value);
+    sprintf(outString_, "EXE(CX_door_lock1 %d)", value);
     comStatus = writeReadRigaku();
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", &statusCode);
+    sscanf(inString_, "EXE(%*s %c)", &statusCode);
     if (statusCode == 'E') {
-        sscanf(inString_, "%*s E %6s", curError);
+        sscanf(inString_, "EXE(%*s E %6s)", curError);
         setStringParam(statusCurError_, curError);
     }
 
@@ -430,12 +441,12 @@ asynStatus Rigaku::setXrayOn(epicsInt32 value)
 
 	this->lock();
 
-    sprintf(outString_, "CX_xray %d", value);
+    sprintf(outString_, "EXE(CX_xray %d)", value);
     comStatus = writeReadRigaku();
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", &statusCode);
+    sscanf(inString_, "EXE(%*s %c)", &statusCode);
     if (statusCode == 'E') {
-        sscanf(inString_, "%*s E %6s", curError);
+        sscanf(inString_, "EXE(%*s E %6s)", curError);
         setStringParam(statusCurError_, curError);
     }
 
@@ -459,12 +470,12 @@ asynStatus Rigaku::setShutterOpen(epicsInt32 value)
 
 	this->lock();
 
-    sprintf(outString_, "CX_shutter %d", value);
+    sprintf(outString_, "EXE(CX_shutter_b %d)", value);
     comStatus = writeReadRigaku();
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", &statusCode);
+    sscanf(inString_, "EXE(%*s %c)", &statusCode);
     if (statusCode == 'E') {
-        sscanf(inString_, "%*s E %6s", curError);
+        sscanf(inString_, "EXE(%*s E %6s)", curError);
         setStringParam(statusCurError_, curError);
     }
 
@@ -492,15 +503,17 @@ asynStatus Rigaku::resetWarning(epicsInt32 value, int i_warning)
 
     // warningCode = warnings[i_warning];
     getStringParam(statusWarnings_[i_warning], 10, warningCode);
+    // if doesn't contain warning code, return
+    if (warningCode[0] != 'W') return asynSuccess;
 
     this->lock();
 
-    sprintf(outString_, "CX_reset_warning %s", warningCode);
+    sprintf(outString_, "EXE(CX_reset_warning %6s)", warningCode);
     comStatus = writeReadRigaku();
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", &statusCode);
+    sscanf(inString_, "EXE(%*s %c)", &statusCode);
     if (statusCode == 'E') {
-        sscanf(inString_, "%*s E %6s", curError);
+        sscanf(inString_, "EXE(%*s E %6s)", curError);
         setStringParam(statusCurError_, curError);
     }
 
@@ -527,15 +540,17 @@ asynStatus Rigaku::resetAlarm(epicsInt32 value, int i_alarm)
     char alarmCode[7] = "";
 
     getStringParam(statusAlarms_[i_alarm], 10, alarmCode);
+    // if doesn't contain alarm code, return
+    if (alarmCode[0] != 'A') return asynSuccess;
 
     this->lock();
 
-    sprintf(outString_, "CX_reset_alarm %s", alarmCode);
+    sprintf(outString_, "EXE(CX_reset_alarm %s)", alarmCode);
     comStatus = writeReadRigaku();
     // get status code, either C for ok or E for error
-    sscanf(inString_, "%*s %c", &statusCode);
+    sscanf(inString_, "EXE(%*s %c)", &statusCode);
     if (statusCode == 'E') {
-        sscanf(inString_, "%*s E %6s", curError);
+        sscanf(inString_, "EXE(%*s E %6s)", curError);
         setStringParam(statusCurError_, curError);
     }
 
@@ -551,8 +566,8 @@ asynStatus Rigaku::resetAlarm(epicsInt32 value, int i_alarm)
 void Rigaku::report(FILE *fp, int details)
 {
     asynPortDriver::report(fp, details);
-    fprintf(fp, "* Port: %s, commType=%d, commPort=%d, commStatus=%d\n", 
-        this->portName, commType_, commPort_, commStatus_);
+    fprintf(fp, "* Port: %s\n", 
+        this->portName);
 	// if (details >= 1) {
     //     // fprintf(fp, "\tVacuum = %d\n", stageVacuum_);
     // }
