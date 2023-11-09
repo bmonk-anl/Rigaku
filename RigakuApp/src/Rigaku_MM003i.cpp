@@ -67,6 +67,19 @@ Rigaku::Rigaku(const char *portName, const char *RigakuPortName) : asynPortDrive
 	createParam(alarm4String, 		        asynParamOctet,   &statusAlarms_[3]);
 	createParam(alarm5String, 		        asynParamOctet,   &statusAlarms_[4]);
 
+    createParam(rampUpDelayString,         asynParamFloat64,  &rampUpDelay_);
+    createParam(rampUpDelayRemainString,   asynParamFloat64,  &rampUpDelayRemain_);
+    createParam(rampUpStepTimeVString,     asynParamFloat64,  &rampUpStepTimeV_);
+    createParam(rampUpStepTimeIString,     asynParamFloat64,  &rampUpStepTimeI_);
+    createParam(rampUpStepRemainString,    asynParamFloat64,  &rampUpStepRemain_);
+    createParam(rampUpTargetVString,       asynParamFloat64,  &rampUpTargetV_);
+    createParam(rampUpTargetIString,       asynParamFloat64,  &rampUpTargetI_);
+    createParam(rampUpStepVString,         asynParamFloat64,  &rampUpStepV_);
+    createParam(rampUpStepIString,         asynParamFloat64,  &rampUpStepI_);
+    createParam(rampUpRunString,           asynParamInt32,    &rampUpRun_);
+
+    createParam(rampStopString,            asynParamInt32,    &rampStop_);
+
 	// Force the device to connect now
 	//connect(this->pasynUserSelf);
     status = pasynOctetSyncIO->connect(RigakuPortName, 0, &pasynUserRigaku_, NULL);
@@ -136,26 +149,22 @@ void Rigaku::pollerThread()
     asynStatus comStatus;
     int xray_on, voltage, current, xray_ready, door_unlocked, door_open, shutter_open;
     char curError[7] = ""; // error will be 6 chars + 1 null char
-    // char warnings[5][7]; // 5 warnings each 6 chars
-    // char alarms[5][7]; // 5 alarms each 6 chars
-    char warnings[5][7] = {
-         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
-         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
-         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
-         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
-         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'}
-     };
-  char alarms[5][7] = {
-         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
-         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
-         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
-         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'},
-         {'\0', '\0', '\0', '\0', '\0', '\0', '\0'}
-     };
+
+    char warnings[5][7];
+    char alarms[5][7];
+
     char statusCode;// = '\0';
   
   while (1)
   {
+    // set warnings and alarms to null so that old ones aren't set
+    for (int i=0; i<5; i++) {
+        for (int j=0; j<7; j++) {
+            warnings[i][j] = '\0';
+            alarms[i][j] = '\0';
+        }
+    }
+
     lock();
 
     // get generator info
@@ -346,6 +355,8 @@ asynStatus Rigaku::writeInt32(asynUser *pasynUser, epicsInt32 value)
     else if (function == resetAlarmsOut_[2])    status = resetAlarm(value, 2);
     else if (function == resetAlarmsOut_[3])    status = resetAlarm(value, 3);
     else if (function == resetAlarmsOut_[4])    status = resetAlarm(value, 4);
+    else if (function == rampUpRun_)            status = rampUpRun(value); 
+    else if (function == rampStop_)             status = rampStop(value); 
 	
 	callParamCallbacks();
 
@@ -563,6 +574,132 @@ asynStatus Rigaku::resetAlarm(epicsInt32 value, int i_alarm)
     return comStatus;
 }
 
+asynStatus Rigaku::rampUpRun(epicsInt32 value)
+{
+
+    static const char *functionName = "rampUpRun";
+    double delay, stepTimeV, stepTimeI;
+    double targetV, targetI, stepV, stepI;
+    double curV, curI;
+
+    if (value != 1) return asynSuccess;
+    
+    // set stop value to 0
+    rampStopVal = 0;
+
+    // fetch needed parameters
+    getDoubleParam(rampUpDelay_, &delay);
+    getDoubleParam(rampUpStepTimeV_, &stepTimeV);
+    getDoubleParam(rampUpStepTimeI_, &stepTimeI);
+    getDoubleParam(rampUpTargetV_, &targetV);
+    getDoubleParam(rampUpTargetI_, &targetI);
+    getDoubleParam(rampUpStepV_, &stepV);
+    getDoubleParam(rampUpStepI_, &stepI);
+
+
+    if ((delay < 0) || (stepTimeV < 0) || (stepTimeI < 0)) return asynError;
+    // check steps and target
+
+    // initial delay while posting time every second
+    setDoubleParam(rampUpDelayRemain_, delay);
+    while (delay > 0) {
+        if (rampStopVal) {
+            setDoubleParam(rampUpDelayRemain_, 0.0);
+            return asynSuccess;
+        }   
+        epicsThreadSleep(1.0);
+        delay -= 1;
+        setDoubleParam(rampUpDelayRemain_, delay);
+    }
+
+    // get current rbv voltage and current
+    getDoubleParam(voltageInVal_, &curV);
+    getDoubleParam(currentInVal_, &curI);
+
+    // source should have some current and voltage
+    if ( (curV==0) || (curI==0) ) return asynError;
+    // ramp up voltage
+    setDoubleParam(rampUpStepRemain_, stepTimeV);
+    while (curV < targetV) {
+        while (stepTimeV > 0) {
+            if (rampStopVal) {
+                setDoubleParam(rampUpStepRemain_, 0.0);
+                return asynSuccess;
+            }   
+            epicsThreadSleep(1.0);
+            stepTimeV -= 1;
+            setDoubleParam(rampUpStepRemain_, stepTimeV);
+        }
+        
+        // increment voltage by step value
+        curV = curV + stepV;         
+        if (curV > targetV) curV = targetV;
+
+        // set power
+        setDoubleParam(voltageOutVal_, curV); 
+        setDoubleParam(currentOutVal_, curI); 
+        setPower(1);
+
+        //reset step time
+        getDoubleParam(rampUpStepTimeV_, &stepTimeV);
+    }
+
+    // get current rbv voltage and current
+    getDoubleParam(voltageInVal_, &curV);
+    getDoubleParam(currentInVal_, &curI);
+
+    // source should have some current and voltage
+    if ( (curV==0) || (curI==0) ) return asynError;
+    // ramp up current 
+    setDoubleParam(rampUpStepRemain_, stepTimeI);
+    while (curI < targetI) {
+        while (stepTimeI > 0) {
+            if (rampStopVal) {
+                setDoubleParam(rampUpStepRemain_, 0.0);
+                return asynSuccess;
+            }   
+            epicsThreadSleep(1.0);
+            stepTimeI -= 1;
+            setDoubleParam(rampUpStepRemain_, stepTimeI);
+        }
+        
+        // increment current by step value
+        curI = curI + stepI;         
+        if (curI > targetI) curI = targetI;
+
+        // set power
+        setDoubleParam(voltageOutVal_, curV); 
+        setDoubleParam(currentOutVal_, curI); 
+        setPower(1);
+
+        //reset step time
+        getDoubleParam(rampUpStepTimeI_, &stepTimeI);
+    }
+
+
+
+    asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, 
+    		"%s:%s, port %s, value = %d\n",
+    		driverName, functionName, this->portName, value);
+    
+    return asynSuccess;
+}
+
+// called on stop button press. sets rampStopVal which is referenced in ramp sequence
+asynStatus Rigaku::rampStop(epicsInt32 value)
+{
+
+    static const char *functionName = "rampStop";
+
+    rampStopVal = value;
+
+    asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, 
+    		"%s:%s, port %s, value = %d\n",
+    		driverName, functionName, this->portName, value);
+    
+    return asynSuccess;
+}
+
 void Rigaku::report(FILE *fp, int details)
 {
     asynPortDriver::report(fp, details);
@@ -573,7 +710,6 @@ void Rigaku::report(FILE *fp, int details)
     // }
     fprintf(fp, "\n");
 }
-
 
 extern "C" int RigakuConfig(const char *portName, const char *RigakuPortName)
 {

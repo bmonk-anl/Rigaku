@@ -259,3 +259,98 @@ record(stringin, "$(P)$(R)alarm5_RBV")
     #field(NELM, "256")
     field(SCAN, "I/O Intr")
 }
+
+# ramp related fields
+record(ao, "$(P)$(R)rampUpDelay")
+{
+    field(DTYP, "asynFloat64")
+    field(OUT,  "@asyn($(PORT),$(ADDR))RAMP_UP_DELAY")
+    field(LINR, "NO CONVERSION")
+	field(PREC, "0")
+	field(EGU,  "s")
+    field(SCAN, "Passive")
+}
+record(ai, "$(P)$(R)rampUpDelayTimeRemain")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR))RAMP_UP_DELAY_REMAIN")
+    field(LINR, "NO CONVERSION")
+	field(PREC, "0")
+	field(EGU,  "s")
+    field(SCAN, "I/O Intr")
+}
+record(ao, "$(P)$(R)rampUpStepTimeV")
+{
+    field(DTYP, "asynFloat64")
+    field(OUT,  "@asyn($(PORT),$(ADDR))RAMP_UP_STEP_T_V")
+    field(LINR, "NO CONVERSION")
+	field(PREC, "0")
+	field(EGU,  "s")
+    field(SCAN, "Passive")
+}
+record(ao, "$(P)$(R)rampUpStepTimeI")
+{
+    field(DTYP, "asynFloat64")
+    field(OUT,  "@asyn($(PORT),$(ADDR))RAMP_UP_STEP_T_I")
+    field(LINR, "NO CONVERSION")
+	field(PREC, "0")
+	field(EGU,  "s")
+    field(SCAN, "Passive")
+}
+record(ai, "$(P)$(R)rampUpStepTimeRemain")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR))RAMP_UP_STEP_REMAIN")
+    field(LINR, "NO CONVERSION")
+	field(PREC, "0")
+	field(EGU,  "s")
+    field(SCAN, "I/O Intr")
+}
+record(ao, "$(P)$(R)rampUpTargetV")
+{
+    field(DTYP, "asynFloat64")
+    field(OUT,  "@asyn($(PORT),$(ADDR))RAMP_UP_TARGET_V")
+    field(LINR, "NO CONVERSION")
+	field(PREC, "0")
+	field(EGU,  "V")
+    field(SCAN, "Passive")
+}
+record(ao, "$(P)$(R)rampUpTargetI")
+{
+    field(DTYP, "asynFloat64")
+    field(OUT,  "@asyn($(PORT),$(ADDR))RAMP_UP_TARGET_I")
+    field(LINR, "NO CONVERSION")
+	field(PREC, "0")
+	field(EGU,  "V")
+    field(SCAN, "Passive")
+}
+record(ao, "$(P)$(R)rampUpStepV")
+{
+    field(DTYP, "asynFloat64")
+    field(OUT,  "@asyn($(PORT),$(ADDR))RAMP_UP_STEP_V")
+    field(LINR, "NO CONVERSION")
+	field(PREC, "0")
+	field(EGU,  "V")
+    field(SCAN, "Passive")
+}
+record(ao, "$(P)$(R)rampUpStepI")
+{
+    field(DTYP, "asynFloat64")
+    field(OUT,  "@asyn($(PORT),$(ADDR))RAMP_UP_STEP_I")
+    field(LINR, "NO CONVERSION")
+	field(PREC, "0")
+	field(EGU,  "V")
+    field(SCAN, "Passive")
+}
+record(bo, "$(P)$(R)rampUpRun")
+{
+	field(DTYP, "asynInt32")
+	field(OUT,  "@asyn($(PORT),$(ADDR))RAMP_UP_RUN")
+	field(VAL,  0)
+}
+record(bo, "$(P)$(R)rampStop")
+{
+	field(DTYP, "asynInt32")
+	field(OUT,  "@asyn($(PORT),$(ADDR))RAMP_STOP")
+	field(VAL,  0)
+}
