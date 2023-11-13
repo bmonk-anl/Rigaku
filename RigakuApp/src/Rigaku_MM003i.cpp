@@ -18,6 +18,12 @@ static void pollerThreadC(void * pPvt)
   pRigaku->pollerThread();
 }
 
+static void rampUpThreadC(void * pPvt)
+{
+  Rigaku *pRigaku = (Rigaku*)pPvt;
+  pRigaku->rampUpThread();
+}
+
 Rigaku::Rigaku(const char *portName, const char *RigakuPortName) : asynPortDriver(portName, MAX_CONTROLLERS,
 		asynInt32Mask | asynFloat64Mask | asynDrvUserMask | asynOctetMask,
 		asynInt32Mask | asynFloat64Mask | asynOctetMask,
@@ -134,7 +140,113 @@ asynStatus Rigaku::writeReadRigaku(const char *output, char *input,
                         
   return status;
 }
+void Rigaku::rampUpThread()
+{
+    double delay, stepTimeV, stepTimeI;
+    double targetV, targetI, stepV, stepI;
+    double curV, curI;
+    
+    // set stop value to 0
+    rampStopVal = 0;
 
+    // fetch needed parameters
+    getDoubleParam(rampUpDelay_, &delay);
+    getDoubleParam(rampUpStepTimeV_, &stepTimeV);
+    getDoubleParam(rampUpStepTimeI_, &stepTimeI);
+    getDoubleParam(rampUpTargetV_, &targetV);
+    getDoubleParam(rampUpTargetI_, &targetI);
+    getDoubleParam(rampUpStepV_, &stepV);
+    getDoubleParam(rampUpStepI_, &stepI);
+
+
+    if ((delay < 0) || (stepTimeV < 0) || (stepTimeI < 0)) return;
+    // check steps and target
+
+    // initial delay while posting time every second
+    while (delay > 0) {
+    setDoubleParam(rampUpDelayRemain_, delay);
+        if (rampStopVal) {
+            setDoubleParam(rampUpDelayRemain_, 0.0);
+            return;
+        }   
+        epicsThreadSleep(1.0);
+        delay -= 1;
+    }
+    setDoubleParam(rampUpDelayRemain_, delay);
+
+    // get current rbv voltage and current
+    getDoubleParam(voltageInVal_, &curV);
+    getDoubleParam(currentInVal_, &curI);
+
+    // source should have some current and voltage
+    if ( (curV==0) || (curI==0) ) return;
+    // ramp up voltage
+    while (curV < targetV) {
+
+        // increment voltage by step value
+        curV = curV + stepV;         
+        if (curV > targetV) curV = targetV;
+
+        // set power
+        setDoubleParam(voltageOutVal_, curV); 
+        setDoubleParam(currentOutVal_, curI); 
+        setPower(1);
+
+        // avoid extra step time
+        if (curI == targetI) goto endVLoop;
+
+        while (stepTimeV > 0) {
+            setDoubleParam(rampUpStepRemain_, stepTimeV);
+            if (rampStopVal) {
+                setDoubleParam(rampUpStepRemain_, 0.0);
+                return;
+            }   
+            epicsThreadSleep(1.0);
+            stepTimeV -= 1;
+        }
+        setDoubleParam(rampUpStepRemain_, stepTimeV);
+        
+        endVLoop:
+        //reset step time
+        getDoubleParam(rampUpStepTimeV_, &stepTimeV);
+    }
+
+    // get current rbv voltage and current
+    getDoubleParam(voltageInVal_, &curV);
+    getDoubleParam(currentInVal_, &curI);
+
+    // source should have some current and voltage
+    if ( (curV==0) || (curI==0) ) return;
+    // ramp up current 
+    while (curI < targetI) {
+        // increment current by step value
+        curI = curI + stepI;         
+        if (curI > targetI) curI = targetI;
+
+        // set power
+        setDoubleParam(voltageOutVal_, curV); 
+        setDoubleParam(currentOutVal_, curI); 
+        setPower(1);
+
+        // avoid extra step time
+        if (curI == targetI) goto endILoop;
+
+        while (stepTimeI > 0) {
+            setDoubleParam(rampUpStepRemain_, stepTimeI);
+            if (rampStopVal) {
+                setDoubleParam(rampUpStepRemain_, 0.0);
+                return;
+            }   
+            epicsThreadSleep(1.0);
+            stepTimeI -= 1;
+        }
+        setDoubleParam(rampUpStepRemain_, stepTimeI);
+
+        endILoop:
+        //reset step time
+        getDoubleParam(rampUpStepTimeI_, &stepTimeI);
+    }
+}
 /*
  * 
  * poller
@@ -578,104 +690,17 @@ asynStatus Rigaku::rampUpRun(epicsInt32 value)
 {
 
     static const char *functionName = "rampUpRun";
-    double delay, stepTimeV, stepTimeI;
-    double targetV, targetI, stepV, stepI;
-    double curV, curI;
 
     if (value != 1) return asynSuccess;
-    
-    // set stop value to 0
-    rampStopVal = 0;
 
-    // fetch needed parameters
-    getDoubleParam(rampUpDelay_, &delay);
-    getDoubleParam(rampUpStepTimeV_, &stepTimeV);
-    getDoubleParam(rampUpStepTimeI_, &stepTimeI);
-    getDoubleParam(rampUpTargetV_, &targetV);
-    getDoubleParam(rampUpTargetI_, &targetI);
-    getDoubleParam(rampUpStepV_, &stepV);
-    getDoubleParam(rampUpStepI_, &stepI);
-
-
-    if ((delay < 0) || (stepTimeV < 0) || (stepTimeI < 0)) return asynError;
-    // check steps and target
-
-    // initial delay while posting time every second
-    setDoubleParam(rampUpDelayRemain_, delay);
-    while (delay > 0) {
-        if (rampStopVal) {
-            setDoubleParam(rampUpDelayRemain_, 0.0);
-            return asynSuccess;
-        }   
-        epicsThreadSleep(1.0);
-        delay -= 1;
-        setDoubleParam(rampUpDelayRemain_, delay);
+    // start ramp thread if not running:
+    if (epicsThreadGetId("RigakuRampUp") == NULL) { 
+        epicsThreadCreate("RigakuRampUp", 
+            epicsThreadPriorityLow,
+            epicsThreadGetStackSize(epicsThreadStackMedium),
+            (EPICSTHREADFUNC)rampUpThreadC,
+            this);
     }
-
-    // get current rbv voltage and current
-    getDoubleParam(voltageInVal_, &curV);
-    getDoubleParam(currentInVal_, &curI);
-
-    // source should have some current and voltage
-    if ( (curV==0) || (curI==0) ) return asynError;
-    // ramp up voltage
-    setDoubleParam(rampUpStepRemain_, stepTimeV);
-    while (curV < targetV) {
-        while (stepTimeV > 0) {
-            if (rampStopVal) {
-                setDoubleParam(rampUpStepRemain_, 0.0);
-                return asynSuccess;
-            }   
-            epicsThreadSleep(1.0);
-            stepTimeV -= 1;
-            setDoubleParam(rampUpStepRemain_, stepTimeV);
-        }
-        
-        // increment voltage by step value
-        curV = curV + stepV;         
-        if (curV > targetV) curV = targetV;
-
-        // set power
-        setDoubleParam(voltageOutVal_, curV); 
-        setDoubleParam(currentOutVal_, curI); 
-        setPower(1);
-
-        //reset step time
-        getDoubleParam(rampUpStepTimeV_, &stepTimeV);
-    }
-
-    // get current rbv voltage and current
-    getDoubleParam(voltageInVal_, &curV);
-    getDoubleParam(currentInVal_, &curI);
-
-    // source should have some current and voltage
-    if ( (curV==0) || (curI==0) ) return asynError;
-    // ramp up current 
-    setDoubleParam(rampUpStepRemain_, stepTimeI);
-    while (curI < targetI) {
-        while (stepTimeI > 0) {
-            if (rampStopVal) {
-                setDoubleParam(rampUpStepRemain_, 0.0);
-                return asynSuccess;
-            }   
-            epicsThreadSleep(1.0);
-            stepTimeI -= 1;
-            setDoubleParam(rampUpStepRemain_, stepTimeI);
-        }
-        
-        // increment current by step value
-        curI = curI + stepI;         
-        if (curI > targetI) curI = targetI;
-
-        // set power
-        setDoubleParam(voltageOutVal_, curV); 
-        setDoubleParam(currentOutVal_, curI); 
-        setPower(1);
-
-        //reset step time
-        getDoubleParam(rampUpStepTimeI_, &stepTimeI);
-    }
-
 
 
     asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, 

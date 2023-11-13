@@ -1,2 +1,10 @@
-# $(P)$(R)voltage
-# $(P)$(R)current
+$(P)$(R)voltage
+$(P)$(R)current
+$(P)$(R)rampUpDelay
+$(P)$(R)rampUpStepTimeV
+$(P)$(R)rampUpStepTimeI
+$(P)$(R)rampUpTargetV
+$(P)$(R)rampUpTargetI
+$(P)$(R)rampUpStepV
+$(P)$(R)rampUpStepI
+

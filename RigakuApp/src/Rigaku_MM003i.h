@@ -11,7 +11,7 @@
 static const char *driverName = "Rigaku";
 
 #define MAX_CONTROLLERS	1
-#define DEFAULT_POLL_TIME 0.05
+#define DEFAULT_POLL_TIME 0.20
 
 #define DEFAULT_CONTROLLER_TIMEOUT 2.0
 
@@ -94,6 +94,7 @@ public:
     // virtual ~Rigaku();
     // These should be private but are called from C
     virtual void pollerThread(void);
+    virtual void rampUpThread(void);
 
 protected:
     // "float" index values
@@ -132,6 +133,8 @@ protected:
     int rampUpRun_;
 
     int rampStop_;
+
+    // int rampDownRun_;
 
 	#define FIRST_RIGAKU_PARAM voltageInVal_;
 	#define LAST_RIGAKU_PARAM rampUpRun_;
